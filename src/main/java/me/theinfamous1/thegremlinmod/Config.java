@@ -6,6 +6,10 @@ import net.neoforged.neoforge.common.ModConfigSpec;
 // Demonstrates how to use Neo's config APIs
 public class Config {
     private static final ModConfigSpec.Builder BUILDER = new ModConfigSpec.Builder();
+    public static final ModConfigSpec.IntValue MAX_SUNBEAM_USE_TIME = BUILDER.comment("The maximum time, in seconds, that the sunbeam can be turned on for.").defineInRange("max_sunbeam_use_time", 5, 0, Integer.MAX_VALUE);
+    public static final ModConfigSpec.IntValue SUNBEAM_USE_COOLDOWN_TIME = BUILDER.comment("The time, in seconds, that the sunbeam will be put on cooldown for after maximum use time.").defineInRange("sunbeam_use_cooldown_time", 60, 0, Integer.MAX_VALUE);
+    public static final ModConfigSpec.IntValue SUNBEAM_DAMAGE = BUILDER.comment("The amount of damage, in half-hearts, that the sunbeam will apply to a target.").defineInRange("sunbeam_damage", 20, 0, Integer.MAX_VALUE);
+    public static final ModConfigSpec.IntValue SUNBEAM_RANGE = BUILDER.comment("The maximum distance, in blocks, that the sunbeam can apply damage to a target.").defineInRange("sunbeam_range", 15, 0, Integer.MAX_VALUE);
 
     static final ModConfigSpec SPEC = BUILDER.build();
 }

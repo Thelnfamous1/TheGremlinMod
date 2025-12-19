@@ -1,0 +1,6 @@
+{
+  "parent": "thegremlinmod:item/sunbeam_off",
+  "textures": {
+    "0": "thegremlinmod:item/sunbeam_off"
+  }
+}

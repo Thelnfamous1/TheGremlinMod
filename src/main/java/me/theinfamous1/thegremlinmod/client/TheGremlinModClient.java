@@ -1,6 +1,7 @@
 package me.theinfamous1.thegremlinmod.client;
 
 import me.theinfamous1.thegremlinmod.TheGremlinMod;
+import net.minecraft.resources.ResourceLocation;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.ModContainer;
@@ -15,6 +16,8 @@ import net.neoforged.neoforge.client.gui.IConfigScreenFactory;
 // You can use EventBusSubscriber to automatically register all static methods in the class annotated with @SubscribeEvent
 @EventBusSubscriber(modid = TheGremlinMod.MODID, value = Dist.CLIENT)
 public class TheGremlinModClient {
+    public static final ResourceLocation SWITCH_PROPERTY = TheGremlinMod.location("switch");
+
     public TheGremlinModClient(ModContainer container) {
         // Allows NeoForge to create a config screen for this mod's configs.
         // The config screen is accessed by going to the Mods screen > clicking on your mod > clicking on config.
@@ -25,5 +28,10 @@ public class TheGremlinModClient {
     @SubscribeEvent
     static void onClientSetup(FMLClientSetupEvent event) {
         // Some client setup code
+        /*
+        ItemProperties.register(TheGremlinMod.SUNBEAM.get(), SWITCH_PROPERTY, (itemStack, clientLevel, livingEntity, i) -> {
+            return itemStack.getOrDefault(TheGremlinMod.SWITCH, false) ? 1.0F : 0.0F;
+        });
+         */
     }
 }

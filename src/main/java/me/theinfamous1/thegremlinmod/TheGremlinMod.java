@@ -1,5 +1,12 @@
 package me.theinfamous1.thegremlinmod;
 
+import com.mojang.serialization.Codec;
+import me.theinfamous1.thegremlinmod.common.criterion.ItemSwitchPredicate;
+import me.theinfamous1.thegremlinmod.common.item.SunbeamItem;
+import net.minecraft.advancements.critereon.ItemSubPredicate;
+import net.minecraft.core.component.DataComponentType;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.resources.ResourceLocation;
 import org.slf4j.Logger;
 
 import com.mojang.logging.LogUtils;
@@ -27,14 +34,18 @@ public class TheGremlinMod {
     public static final String MODID = "thegremlinmod";
     // Directly reference a slf4j logger
     public static final Logger LOGGER = LogUtils.getLogger();
+
+    public static final DeferredRegister.DataComponents DATA_COMPONENTS = DeferredRegister.createDataComponents(Registries.DATA_COMPONENT_TYPE, MODID);
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<Boolean>> SWITCH = DATA_COMPONENTS.registerComponentType("switch", booleanBuilder -> booleanBuilder.persistent(Codec.BOOL).networkSynchronized(ByteBufCodecs.BOOL));
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<Integer>> TIMER = DATA_COMPONENTS.registerComponentType("timer", booleanBuilder -> booleanBuilder.persistent(Codec.INT).networkSynchronized(ByteBufCodecs.INT));
+
     // Create a Deferred Register to hold Items which will all be registered under the "thegremlinmod" namespace
     public static final DeferredRegister.Items ITEMS = DeferredRegister.createItems(MODID);
     // Create a Deferred Register to hold CreativeModeTabs which will all be registered under the "thegremlinmod" namespace
     public static final DeferredRegister<CreativeModeTab> CREATIVE_MODE_TABS = DeferredRegister.create(Registries.CREATIVE_MODE_TAB, MODID);
 
-
-    // Creates a new food item with the id "thegremlinmod:example_id", nutrition 1 and saturation 2
     public static final DeferredItem<Item> SUN_DROP = ITEMS.registerSimpleItem("sun_drop", new Item.Properties());
+    public static final DeferredItem<Item> SUNBEAM = ITEMS.registerItem("sunbeam", p -> new SunbeamItem(p.stacksTo(1).component(SWITCH, false).component(TIMER, 0)));
 
     // Creates a creative tab with the id "thegremlinmod:example_tab" for the example item, that is placed after the combat tab
     public static final DeferredHolder<CreativeModeTab, CreativeModeTab> MOD_TAB = CREATIVE_MODE_TABS.register("tab", () -> CreativeModeTab.builder()
@@ -42,7 +53,12 @@ public class TheGremlinMod {
             .icon(() -> SUN_DROP.get().getDefaultInstance())
             .displayItems((parameters, output) -> {
                 output.accept(SUN_DROP.get()); // Add the example item to the tab. For your own tabs, this method is preferred over the event
+                output.accept(SUNBEAM.get());
             }).build());
+
+
+    public static final DeferredRegister<ItemSubPredicate.Type<?>> ITEM_SUB_PREDICATES = DeferredRegister.create(Registries.ITEM_SUB_PREDICATE_TYPE, MODID);
+    public static final DeferredHolder<ItemSubPredicate.Type<?>, ItemSubPredicate.Type<ItemSwitchPredicate>> SWITCH_PREDICATE = ITEM_SUB_PREDICATES.register("switch", () -> new ItemSubPredicate.Type<>(ItemSwitchPredicate.CODEC));
 
     // The constructor for the mod class is the first code that is run when your mod is loaded.
     // FML will recognize some parameter types like IEventBus or ModContainer and pass them in automatically.
@@ -54,6 +70,8 @@ public class TheGremlinMod {
         ITEMS.register(modEventBus);
         // Register the Deferred Register to the mod event bus so tabs get registered
         CREATIVE_MODE_TABS.register(modEventBus);
+        DATA_COMPONENTS.register(modEventBus);
+        ITEM_SUB_PREDICATES.register(modEventBus);
 
         // Register ourselves for server and other game events we are interested in.
         // Note that this is necessary if and only if we want *this* class (TheGremlinMod) to respond directly to events.
@@ -62,6 +80,10 @@ public class TheGremlinMod {
 
         // Register our mod's ModConfigSpec so that FML can create and load the config file for us
         modContainer.registerConfig(ModConfig.Type.COMMON, Config.SPEC);
+    }
+
+    public static ResourceLocation location(String path){
+        return ResourceLocation.fromNamespaceAndPath(MODID, path);
     }
 
     private void commonSetup(FMLCommonSetupEvent event) {

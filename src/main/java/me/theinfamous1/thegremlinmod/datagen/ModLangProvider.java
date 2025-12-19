@@ -12,6 +12,7 @@ public class ModLangProvider extends LanguageProvider {
     @Override
     protected void addTranslations() {
         this.add(TheGremlinMod.SUN_DROP.get(), "Sun Drop");
+        this.add(TheGremlinMod.SUNBEAM.get(), "Sunbeam");
         this.add(TheGremlinMod.MOD_TAB.get().getDisplayName().getString(), "The Gremlin Mod");
 
     }

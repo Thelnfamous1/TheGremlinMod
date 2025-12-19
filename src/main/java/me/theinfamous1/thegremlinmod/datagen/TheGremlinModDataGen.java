@@ -22,5 +22,6 @@ public class TheGremlinModDataGen {
         ExistingFileHelper existingFileHelper = event.getExistingFileHelper();
         event.addProvider(new ModLangProvider(packOutput));
         event.addProvider(new ModItemModelProvider(packOutput, existingFileHelper));
+        event.addProvider(new ModEntityTypeTagsProvider(packOutput, lookupProvider, existingFileHelper));
     }
 }
