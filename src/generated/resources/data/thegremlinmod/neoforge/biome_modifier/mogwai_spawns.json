@@ -1,0 +1,10 @@
+{
+  "type": "neoforge:add_spawns",
+  "biomes": "#thegremlinmod:spawns_mogwai",
+  "spawners": {
+    "type": "thegremlinmod:mogwai",
+    "maxCount": 1,
+    "minCount": 1,
+    "weight": 4
+  }
+}

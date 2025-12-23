@@ -5,6 +5,7 @@ import me.theinfamous1.thegremlinmod.common.entity.ai.FleeRainGoal;
 import me.theinfamous1.thegremlinmod.common.entity.ai.GoToLandGoal;
 import me.theinfamous1.thegremlinmod.common.entity.ai.RestrictRainGoal;
 import me.theinfamous1.thegremlinmod.common.util.TGMTags;
+import net.minecraft.core.BlockPos;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundAddEntityPacket;
@@ -15,6 +16,7 @@ import net.minecraft.server.level.ServerEntity;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
@@ -28,6 +30,7 @@ import net.minecraft.world.entity.monster.Enemy;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelAccessor;
 import software.bernie.geckolib.animatable.GeoEntity;
 import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
 import software.bernie.geckolib.animation.*;
@@ -69,6 +72,10 @@ public class Gremlin extends AbstractGremlin implements GeoEntity, Enemy, Gremli
                 .add(Attributes.FOLLOW_RANGE, 30.0D)
                 .add(Attributes.ATTACK_DAMAGE, 2.0D)
                 .add(Attributes.STEP_HEIGHT, 1.0D);
+    }
+
+    public static boolean checkCustomSpawnRules(EntityType<? extends Gremlin> animal, LevelAccessor level, MobSpawnType spawnType, BlockPos pos, RandomSource random) {
+        return PathfinderMob.checkMobSpawnRules(animal, level, spawnType, pos, random);
     }
 
     @Override

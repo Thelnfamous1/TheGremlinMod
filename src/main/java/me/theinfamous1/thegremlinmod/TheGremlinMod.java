@@ -12,9 +12,12 @@ import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
+import net.minecraft.world.entity.SpawnPlacementTypes;
+import net.minecraft.world.level.levelgen.Heightmap;
 import net.neoforged.fml.loading.FMLEnvironment;
 import net.neoforged.neoforge.common.DeferredSpawnEggItem;
 import net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent;
+import net.neoforged.neoforge.event.entity.RegisterSpawnPlacementsEvent;
 import org.slf4j.Logger;
 
 import com.mojang.logging.LogUtils;
@@ -100,6 +103,7 @@ public class TheGremlinMod {
         // Register the commonSetup method for modloading
         modEventBus.addListener(this::commonSetup);
         modEventBus.addListener(this::entityAttributeCreation);
+        modEventBus.addListener(this::onEntitySpawnPlacements);
 
         // Register the Deferred Register to the mod event bus so items get registered
         ITEMS.register(modEventBus);
@@ -134,6 +138,12 @@ public class TheGremlinMod {
         event.put(MOGWAI.get(), Mogwai.createAttributes().build());
         event.put(MOGWAI_COCOON.get(), MogwaiCocoon.createAttributes().build());
         event.put(GREMLIN.get(), Gremlin.createAttributes().build());
+    }
+
+    private void onEntitySpawnPlacements(RegisterSpawnPlacementsEvent event){
+        event.register(MOGWAI.get(), SpawnPlacementTypes.ON_GROUND, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, Mogwai::checkCustomSpawnRules, RegisterSpawnPlacementsEvent.Operation.OR);
+        event.register(MOGWAI_COCOON.get(), SpawnPlacementTypes.ON_GROUND, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, MogwaiCocoon::checkCustomSpawnRules, RegisterSpawnPlacementsEvent.Operation.OR);
+        event.register(GREMLIN.get(), SpawnPlacementTypes.ON_GROUND, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, Gremlin::checkCustomSpawnRules, RegisterSpawnPlacementsEvent.Operation.OR);
     }
 
     // You can use SubscribeEvent and let the Event Bus discover methods to call

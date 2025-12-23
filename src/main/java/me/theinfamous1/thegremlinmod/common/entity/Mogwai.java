@@ -5,14 +5,17 @@ import me.theinfamous1.thegremlinmod.common.entity.ai.GoToLandGoal;
 import me.theinfamous1.thegremlinmod.common.entity.ai.MogwaiRestGoal;
 import me.theinfamous1.thegremlinmod.common.entity.ai.FleeRainGoal;
 import me.theinfamous1.thegremlinmod.common.entity.ai.RestrictRainGoal;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.particles.ItemParticleOption;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.util.Mth;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.Pose;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
@@ -22,6 +25,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.food.FoodProperties;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.event.EventHooks;
 import software.bernie.geckolib.animatable.GeoEntity;
@@ -63,6 +67,10 @@ public class Mogwai extends AbstractGremlin implements GeoEntity{
                 .add(Attributes.MAX_HEALTH, 10.0D)
                 .add(Attributes.MOVEMENT_SPEED, 0.3D)
                 .add(Attributes.STEP_HEIGHT, 1.0D);
+    }
+
+    public static boolean checkCustomSpawnRules(EntityType<? extends Mogwai> animal, LevelAccessor level, MobSpawnType spawnType, BlockPos pos, RandomSource random) {
+        return PathfinderMob.checkMobSpawnRules(animal, level, spawnType, pos, random);
     }
 
     public boolean isCrying() {

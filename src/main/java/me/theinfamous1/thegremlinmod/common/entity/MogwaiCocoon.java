@@ -1,6 +1,7 @@
 package me.theinfamous1.thegremlinmod.common.entity;
 
 import me.theinfamous1.thegremlinmod.TheGremlinMod;
+import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
@@ -11,19 +12,19 @@ import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerEntity;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.DamageTypeTags;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.damagesource.DamageSource;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.LightningBolt;
-import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelAccessor;
 import net.neoforged.neoforge.event.EventHooks;
 import software.bernie.geckolib.animatable.GeoEntity;
 import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
 import software.bernie.geckolib.animation.*;
+import software.bernie.geckolib.animation.AnimationState;
 import software.bernie.geckolib.util.GeckoLibUtil;
 
 public class MogwaiCocoon extends Mob implements GeoEntity, GremlinConvert {
@@ -46,6 +47,10 @@ public class MogwaiCocoon extends Mob implements GeoEntity, GremlinConvert {
 
     public static AttributeSupplier.Builder createAttributes() {
         return Mob.createMobAttributes().add(Attributes.STEP_HEIGHT, 0.0);
+    }
+
+    public static boolean checkCustomSpawnRules(EntityType<? extends MogwaiCocoon> animal, LevelAccessor level, MobSpawnType spawnType, BlockPos pos, RandomSource random) {
+        return PathfinderMob.checkMobSpawnRules(animal, level, spawnType, pos, random);
     }
 
     @Override
