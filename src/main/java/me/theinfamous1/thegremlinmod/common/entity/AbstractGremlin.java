@@ -31,6 +31,8 @@ public abstract class AbstractGremlin extends PathfinderMob{
         super(entityType, level);
         this.setPathfindingMalus(PathType.DANGER_FIRE, 16.0F);
         this.setPathfindingMalus(PathType.DAMAGE_FIRE, -1.0F);
+        this.setPathfindingMalus(PathType.WATER, -1.0F);
+        this.setPathfindingMalus(PathType.WATER_BORDER, -1.0F);
     }
 
     @Override
@@ -293,5 +295,14 @@ public abstract class AbstractGremlin extends PathfinderMob{
     @Override
     public boolean isPushedByFluid() {
         return !this.isSwimming();
+    }
+
+    @Override
+    protected float getWaterSlowDown() {
+        return 0.98F;
+    }
+
+    public float getSwimmingSlowdown(){
+        return 0.98F;
     }
 }

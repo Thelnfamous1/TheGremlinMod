@@ -1,5 +1,6 @@
 package me.theinfamous1.thegremlinmod.common.entity;
 
+import me.theinfamous1.thegremlinmod.Config;
 import me.theinfamous1.thegremlinmod.TheGremlinMod;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -11,6 +12,7 @@ import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerEntity;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.damagesource.DamageSource;
@@ -31,7 +33,6 @@ public class MogwaiCocoon extends Mob implements GeoEntity, GremlinConvert {
     private static final RawAnimation IDLE = RawAnimation.begin().thenPlay("cocoon.idle");
     private static final RawAnimation CONVERT_FROM_MOGWAI = RawAnimation.begin().thenPlay("cocoon.mogwai");
     private static final RawAnimation CONVERT_TO_GREMLIN = RawAnimation.begin().thenPlay("cocoon.gremlin");
-    public static final int TIME_TO_HATCH = TheGremlinMod.isDevelopmentEnvironment() ? 100 : Level.TICKS_PER_DAY;
     private final AnimatableInstanceCache animatableInstanceCache = GeckoLibUtil.createInstanceCache(this);
     private static final EntityDataAccessor<Boolean> DATA_SPAWNING = SynchedEntityData.defineId(MogwaiCocoon.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Boolean> DATA_HATCHING = SynchedEntityData.defineId(MogwaiCocoon.class, EntityDataSerializers.BOOLEAN);
@@ -46,7 +47,7 @@ public class MogwaiCocoon extends Mob implements GeoEntity, GremlinConvert {
     }
 
     public static AttributeSupplier.Builder createAttributes() {
-        return Mob.createMobAttributes().add(Attributes.STEP_HEIGHT, 0.0);
+        return Mob.createMobAttributes().add(Attributes.STEP_HEIGHT, 0.0).add(Attributes.KNOCKBACK_RESISTANCE, 1.0D);
     }
 
     public static boolean checkCustomSpawnRules(EntityType<? extends MogwaiCocoon> animal, LevelAccessor level, MobSpawnType spawnType, BlockPos pos, RandomSource random) {
@@ -113,8 +114,13 @@ public class MogwaiCocoon extends Mob implements GeoEntity, GremlinConvert {
         super.readAdditionalSaveData(compound);
 
         compound.putInt("age", this.tickCount);
-        compound.putBoolean("hatched", this.hatched);
+        compound.putBoolean("hatched", this.hatched());
     }
+
+    private boolean hatched() {
+        return this.hatched;
+    }
+
 
     @Override
     public void addAdditionalSaveData(CompoundTag compound) {
@@ -124,8 +130,12 @@ public class MogwaiCocoon extends Mob implements GeoEntity, GremlinConvert {
             this.tickCount = compound.getInt("age");
         }
         if(compound.contains("hatched")){
-            this.hatched = compound.getBoolean("hatched");
+            this.setHatched(compound.getBoolean("hatched"));
         }
+    }
+
+    private void setHatched(boolean hatched) {
+        this.hatched = hatched;
     }
 
     @Override
@@ -134,7 +144,7 @@ public class MogwaiCocoon extends Mob implements GeoEntity, GremlinConvert {
         this.updateSpawning();
         this.updateHatching();
 
-        if(!this.level().isClientSide() && this.tickCount > TIME_TO_HATCH && !this.isHatching() && !this.hatched){
+        if(!this.level().isClientSide() && this.tickCount > Config.COCOON_HATCH_TIME.get() && !this.isHatching() && !this.hatched()){
             this.setHatching(true);
         }
     }
@@ -147,7 +157,7 @@ public class MogwaiCocoon extends Mob implements GeoEntity, GremlinConvert {
             if(TheGremlinMod.isDevelopmentEnvironment()){
                 TheGremlinMod.LOGGER.info("Finished hatching for {}", this);
             }
-            this.hatched = true;
+            this.setHatched(true);
             this.setHatching(false);
             if(!this.level().isClientSide()){
                 Gremlin gremlin = this.convertTo(TheGremlinMod.GREMLIN.get(), false);
@@ -234,5 +244,15 @@ public class MogwaiCocoon extends Mob implements GeoEntity, GremlinConvert {
     @Override
     public boolean receivesConversion(Mob convertingMob) {
         return convertingMob.getType() == TheGremlinMod.MOGWAI.get();
+    }
+
+    @Override
+    public boolean canBeCollidedWith() {
+        return this.isAlive();
+    }
+
+    @Override
+    public SoundSource getSoundSource() {
+        return SoundSource.HOSTILE;
     }
 }

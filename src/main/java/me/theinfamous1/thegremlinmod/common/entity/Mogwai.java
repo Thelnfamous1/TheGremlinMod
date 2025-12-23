@@ -9,6 +9,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.particles.ItemParticleOption;
 import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
@@ -144,7 +145,10 @@ public class Mogwai extends AbstractGremlin implements GeoEntity{
         ItemStack itemstack = player.getItemInHand(hand);
         if (this.isFood(itemstack) && !this.isEating()) {
             if(this.isDoNotFeedTime() && !this.level().isClientSide()){
-                this.fedPastBedtime = true;
+                if(TheGremlinMod.isDevelopmentEnvironment()){
+                    TheGremlinMod.LOGGER.info("Fed past bedtime for {}", this);
+                }
+                this.setFedPastBedtime(true);
             }
             if(TheGremlinMod.isDevelopmentEnvironment()){
                 TheGremlinMod.LOGGER.info("Triggered eating for {}", this);
@@ -389,13 +393,34 @@ public class Mogwai extends AbstractGremlin implements GeoEntity{
     }
 
     private void updateCrying() {
-        if(this.fedPastBedtime && !this.isDoNotFeedTime()){
-            this.fedPastBedtime = false;
+        if(this.fedPastBedtime() && !this.isDoNotFeedTime()){
+            if(TheGremlinMod.isDevelopmentEnvironment()){
+                TheGremlinMod.LOGGER.info("Reset fed past bedtime for {}", this);
+            }
+            this.setFedPastBedtime(false);
         }
         this.setCrying(this.isDoNotFeedTime() && !this.fedPastBedtime());
     }
 
     private boolean fedPastBedtime() {
         return this.fedPastBedtime;
+    }
+
+    private void setFedPastBedtime(boolean fed) {
+        this.fedPastBedtime = fed;
+    }
+
+    @Override
+    public void readAdditionalSaveData(CompoundTag compound) {
+        super.readAdditionalSaveData(compound);
+        if(compound.contains("fed_past_bedtime")){
+            this.setFedPastBedtime(compound.getBoolean("fed_past_bedtime"));
+        }
+    }
+
+    @Override
+    public void addAdditionalSaveData(CompoundTag compound) {
+        super.addAdditionalSaveData(compound);
+        compound.putBoolean("fed_past_bedtime", this.fedPastBedtime());
     }
 }

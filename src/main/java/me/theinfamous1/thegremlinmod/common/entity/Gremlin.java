@@ -31,6 +31,7 @@ import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.pathfinder.PathType;
 import software.bernie.geckolib.animatable.GeoEntity;
 import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
 import software.bernie.geckolib.animation.*;
@@ -91,8 +92,8 @@ public class Gremlin extends AbstractGremlin implements GeoEntity, Enemy, Gremli
 
 
         this.targetSelector.addGoal(1, (new HurtByTargetGoal(this)).setAlertOthers());
-        this.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, Player.class, true));
-        this.targetSelector.addGoal(3, new NearestAttackableTargetGoal<>(this, LivingEntity.class, 0, true, false, LivingEntity::attackable));
+        this.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, Player.class,0, true, false, this::canPursueTarget));
+        this.targetSelector.addGoal(3, new NearestAttackableTargetGoal<>(this, LivingEntity.class, 0, true, false, le -> le.attackable() && this.canPursueTarget(le)));
     }
 
     @Override
@@ -358,4 +359,25 @@ public class Gremlin extends AbstractGremlin implements GeoEntity, Enemy, Gremli
         return new LivingEntity.Fallsounds(SoundEvents.HOSTILE_SMALL_FALL, SoundEvents.HOSTILE_BIG_FALL);
     }
 
+    @Override
+    public void customServerAiStep() {
+        super.customServerAiStep();
+        this.updateWaterPathfinding();
+    }
+
+    private void updateWaterPathfinding() {
+        boolean chasingPlayer = this.getTarget() instanceof Player;
+        float waterPenalty = chasingPlayer ? 0.0F : -1.0F;
+        this.setPathfindingMalus(PathType.WATER, waterPenalty);
+        this.setPathfindingMalus(PathType.WATER_BORDER, waterPenalty);
+    }
+
+    @Override
+    public boolean canAttack(LivingEntity target) {
+        return super.canAttack(target) && canPursueTarget(target);
+    }
+
+    private boolean canPursueTarget(LivingEntity target) {
+        return !target.isUnderWater() || target instanceof Player;
+    }
 }
