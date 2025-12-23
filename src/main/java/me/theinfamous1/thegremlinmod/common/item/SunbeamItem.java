@@ -90,7 +90,7 @@ public class SunbeamItem extends Item implements GeoItem {
                 HitResult pick = this.pick(entity, 0);
                 if(pick instanceof EntityHitResult entityHitResult && entityHitResult.getEntity().getType().is(TGMTags.VULNERABLE_TO_SUNBEAM)){
                     DamageSource sunbeamDamageSource = level.damageSources().magic();
-                    if(entity.invulnerableTime > 0 || sunbeamDamageSource.is(DamageTypeTags.BYPASSES_COOLDOWN)){
+                    if(entity.invulnerableTime <= 0 || sunbeamDamageSource.is(DamageTypeTags.BYPASSES_COOLDOWN)){
                         entityHitResult.getEntity().hurt(sunbeamDamageSource, Config.SUNBEAM_DAMAGE.get());
                     }
                 }
