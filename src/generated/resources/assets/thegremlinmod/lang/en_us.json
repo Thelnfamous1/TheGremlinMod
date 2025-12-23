@@ -1,4 +1,10 @@
 {
+  "entity.thegremlinmod.gremlin": "Gremlin",
+  "entity.thegremlinmod.mogwai": "Mogwai",
+  "entity.thegremlinmod.mogwai_cocoon": "Mogwai Cocoon",
+  "item.thegremlinmod.gremlin_spawn_egg": "Gremlin Spawn Egg",
+  "item.thegremlinmod.mogwai_cocoon_spawn_egg": "Mogwai Cocoon Spawn Egg",
+  "item.thegremlinmod.mogwai_spawn_egg": "Mogwai Spawn Egg",
   "item.thegremlinmod.sun_drop": "Sun Drop",
   "item.thegremlinmod.sunbeam": "Sunbeam",
   "itemGroup.thegremlinmod": "The Gremlin Mod"

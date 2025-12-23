@@ -23,5 +23,8 @@ public class ModItemModelProvider extends ItemModelProvider {
         sunbeamModel.override().predicate(TheGremlinModClient.SWITCH_PROPERTY, 1.0F).model(sunbeamOnModel);
          */
         this.withExistingParent(sunbeamId.getPath(), sunbeamOff).texture("0", sunbeamOff.withPrefix("item/"));
+        this.spawnEggItem(TheGremlinMod.MOGWAI_SPAWN_EGG.get());
+        this.spawnEggItem(TheGremlinMod.MOGWAI_COCOON_SPAWN_EGG.get());
+        this.spawnEggItem(TheGremlinMod.GREMLIN_SPAWN_EGG.get());
     }
 }

@@ -2,11 +2,19 @@ package me.theinfamous1.thegremlinmod;
 
 import com.mojang.serialization.Codec;
 import me.theinfamous1.thegremlinmod.common.criterion.ItemSwitchPredicate;
+import me.theinfamous1.thegremlinmod.common.entity.Gremlin;
+import me.theinfamous1.thegremlinmod.common.entity.Mogwai;
+import me.theinfamous1.thegremlinmod.common.entity.MogwaiCocoon;
 import me.theinfamous1.thegremlinmod.common.item.SunbeamItem;
 import net.minecraft.advancements.critereon.ItemSubPredicate;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.MobCategory;
+import net.neoforged.fml.loading.FMLEnvironment;
+import net.neoforged.neoforge.common.DeferredSpawnEggItem;
+import net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent;
 import org.slf4j.Logger;
 
 import com.mojang.logging.LogUtils;
@@ -47,6 +55,33 @@ public class TheGremlinMod {
     public static final DeferredItem<Item> SUN_DROP = ITEMS.registerSimpleItem("sun_drop", new Item.Properties());
     public static final DeferredItem<Item> SUNBEAM = ITEMS.registerItem("sunbeam", p -> new SunbeamItem(p.stacksTo(1).component(SWITCH, false).component(TIMER, 0)));
 
+    public static final DeferredRegister<ItemSubPredicate.Type<?>> ITEM_SUB_PREDICATES = DeferredRegister.create(Registries.ITEM_SUB_PREDICATE_TYPE, MODID);
+    public static final DeferredHolder<ItemSubPredicate.Type<?>, ItemSubPredicate.Type<ItemSwitchPredicate>> SWITCH_PREDICATE = ITEM_SUB_PREDICATES.register("switch", () -> new ItemSubPredicate.Type<>(ItemSwitchPredicate.CODEC));
+
+    public static final DeferredRegister<EntityType<?>> ENTITY_TYPES = DeferredRegister.create(Registries.ENTITY_TYPE, MODID);
+
+    public static final DeferredHolder<EntityType<?>, EntityType<Mogwai>> MOGWAI = ENTITY_TYPES.register("mogwai", () ->
+            EntityType.Builder.of(Mogwai::new, MobCategory.CREATURE)
+                    .sized(0.25F, 0.75F)
+                    .build(location("mogwai").toString()));
+
+    public static final DeferredHolder<EntityType<?>, EntityType<MogwaiCocoon>> MOGWAI_COCOON = ENTITY_TYPES.register("mogwai_cocoon", () ->
+            EntityType.Builder.of(MogwaiCocoon::new, MobCategory.CREATURE)
+                    .sized(0.375F, 0.625F)
+                    .fireImmune()
+                    .build(location("mogwai_cocoon").toString()));
+
+    public static final DeferredHolder<EntityType<?>, EntityType<Gremlin>> GREMLIN = ENTITY_TYPES.register("gremlin", () ->
+            EntityType.Builder.of(Gremlin::new, MobCategory.MONSTER)
+                    .sized(0.25F, 0.75F)
+                    .build(location("gremlin").toString()));
+
+
+    public static final DeferredItem<Item> MOGWAI_SPAWN_EGG = ITEMS.registerItem("mogwai_spawn_egg", p -> new DeferredSpawnEggItem(MOGWAI, 0xcacaca, 0x7a602a, p));
+    public static final DeferredItem<Item> MOGWAI_COCOON_SPAWN_EGG = ITEMS.registerItem("mogwai_cocoon_spawn_egg", p -> new DeferredSpawnEggItem(MOGWAI_COCOON, 0x263e00, 0x406802, p));
+    public static final DeferredItem<Item> GREMLIN_SPAWN_EGG = ITEMS.registerItem("gremlin_spawn_egg", p -> new DeferredSpawnEggItem(GREMLIN, 0x1f3200, 0xe52e07, p));
+
+
     // Creates a creative tab with the id "thegremlinmod:example_tab" for the example item, that is placed after the combat tab
     public static final DeferredHolder<CreativeModeTab, CreativeModeTab> MOD_TAB = CREATIVE_MODE_TABS.register("tab", () -> CreativeModeTab.builder()
             .title(Component.translatable("itemGroup.thegremlinmod")) //The language key for the title of your CreativeModeTab
@@ -54,17 +89,17 @@ public class TheGremlinMod {
             .displayItems((parameters, output) -> {
                 output.accept(SUN_DROP.get()); // Add the example item to the tab. For your own tabs, this method is preferred over the event
                 output.accept(SUNBEAM.get());
+                output.accept(MOGWAI_SPAWN_EGG.get());
+                output.accept(MOGWAI_COCOON_SPAWN_EGG.get());
+                output.accept(GREMLIN_SPAWN_EGG.get());
             }).build());
-
-
-    public static final DeferredRegister<ItemSubPredicate.Type<?>> ITEM_SUB_PREDICATES = DeferredRegister.create(Registries.ITEM_SUB_PREDICATE_TYPE, MODID);
-    public static final DeferredHolder<ItemSubPredicate.Type<?>, ItemSubPredicate.Type<ItemSwitchPredicate>> SWITCH_PREDICATE = ITEM_SUB_PREDICATES.register("switch", () -> new ItemSubPredicate.Type<>(ItemSwitchPredicate.CODEC));
 
     // The constructor for the mod class is the first code that is run when your mod is loaded.
     // FML will recognize some parameter types like IEventBus or ModContainer and pass them in automatically.
     public TheGremlinMod(IEventBus modEventBus, ModContainer modContainer) {
         // Register the commonSetup method for modloading
         modEventBus.addListener(this::commonSetup);
+        modEventBus.addListener(this::entityAttributeCreation);
 
         // Register the Deferred Register to the mod event bus so items get registered
         ITEMS.register(modEventBus);
@@ -72,6 +107,7 @@ public class TheGremlinMod {
         CREATIVE_MODE_TABS.register(modEventBus);
         DATA_COMPONENTS.register(modEventBus);
         ITEM_SUB_PREDICATES.register(modEventBus);
+        ENTITY_TYPES.register(modEventBus);
 
         // Register ourselves for server and other game events we are interested in.
         // Note that this is necessary if and only if we want *this* class (TheGremlinMod) to respond directly to events.
@@ -86,8 +122,18 @@ public class TheGremlinMod {
         return ResourceLocation.fromNamespaceAndPath(MODID, path);
     }
 
+    public static boolean isDevelopmentEnvironment() {
+        return !FMLEnvironment.production;
+    }
+
     private void commonSetup(FMLCommonSetupEvent event) {
         // Some common setup code
+    }
+
+    private void entityAttributeCreation(EntityAttributeCreationEvent event){
+        event.put(MOGWAI.get(), Mogwai.createAttributes().build());
+        event.put(MOGWAI_COCOON.get(), MogwaiCocoon.createAttributes().build());
+        event.put(GREMLIN.get(), Gremlin.createAttributes().build());
     }
 
     // You can use SubscribeEvent and let the Event Bus discover methods to call

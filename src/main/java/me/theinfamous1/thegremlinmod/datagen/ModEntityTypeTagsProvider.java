@@ -5,7 +5,6 @@ import me.theinfamous1.thegremlinmod.common.util.TGMTags;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.data.PackOutput;
 import net.minecraft.data.tags.EntityTypeTagsProvider;
-import net.minecraft.tags.EntityTypeTags;
 import net.neoforged.neoforge.common.data.ExistingFileHelper;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,6 +17,7 @@ public class ModEntityTypeTagsProvider extends EntityTypeTagsProvider {
 
     @Override
     protected void addTags(HolderLookup.Provider provider) {
-        this.tag(TGMTags.VULNERABLE_TO_SUNBEAM).addTag(EntityTypeTags.UNDEAD);
+        this.tag(TGMTags.VULNERABLE_TO_SUNBEAM).add(TheGremlinMod.GREMLIN.get());
+        this.tag(TGMTags.GREMLIN_FRIENDS).add(TheGremlinMod.GREMLIN.get());
     }
 }

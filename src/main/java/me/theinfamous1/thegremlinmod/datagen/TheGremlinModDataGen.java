@@ -23,5 +23,7 @@ public class TheGremlinModDataGen {
         event.addProvider(new ModLangProvider(packOutput));
         event.addProvider(new ModItemModelProvider(packOutput, existingFileHelper));
         event.addProvider(new ModEntityTypeTagsProvider(packOutput, lookupProvider, existingFileHelper));
+        event.addProvider(new ModRecipeProvider(packOutput, lookupProvider));
+        event.addProvider(new ModLootProvider(packOutput, lookupProvider));
     }
 }

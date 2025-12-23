@@ -8,6 +8,7 @@ import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
+import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import net.neoforged.neoforge.client.gui.ConfigurationScreen;
 import net.neoforged.neoforge.client.gui.IConfigScreenFactory;
 
@@ -33,5 +34,12 @@ public class TheGremlinModClient {
             return itemStack.getOrDefault(TheGremlinMod.SWITCH, false) ? 1.0F : 0.0F;
         });
          */
+    }
+
+    @SubscribeEvent
+    static void onRegisterEntityRenderers(EntityRenderersEvent.RegisterRenderers event){
+        event.registerEntityRenderer(TheGremlinMod.MOGWAI.get(), ctx -> new MogwaiRenderer(ctx, TheGremlinMod.MOGWAI.getId()));
+        event.registerEntityRenderer(TheGremlinMod.MOGWAI_COCOON.get(), ctx -> new MogwaiCocoonRenderer(ctx, TheGremlinMod.MOGWAI_COCOON.getId()));
+        event.registerEntityRenderer(TheGremlinMod.GREMLIN.get(), ctx -> new GremlinRenderer(ctx, TheGremlinMod.GREMLIN.getId()));
     }
 }
