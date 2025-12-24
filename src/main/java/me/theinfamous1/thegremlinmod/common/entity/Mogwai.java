@@ -27,6 +27,7 @@ import net.minecraft.world.food.FoodProperties;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.event.EventHooks;
 import software.bernie.geckolib.animatable.GeoEntity;
@@ -138,6 +139,7 @@ public class Mogwai extends AbstractGremlin implements GeoEntity{
         this.goalSelector.addGoal(3, new MogwaiRestGoal(this));
         this.goalSelector.addGoal(4, new WaterAvoidingRandomStrollGoal(this, 1.0F, 0.0F));
         this.goalSelector.addGoal(5, new LookAtPlayerGoal(this, Player.class, 10.0F));
+        this.goalSelector.addGoal(6, new RandomLookAroundGoal(this));
     }
 
     @Override
@@ -422,5 +424,10 @@ public class Mogwai extends AbstractGremlin implements GeoEntity{
     public void addAdditionalSaveData(CompoundTag compound) {
         super.addAdditionalSaveData(compound);
         compound.putBoolean("fed_past_bedtime", this.fedPastBedtime());
+    }
+
+    @Override
+    public float getWalkTargetValue(BlockPos pos, LevelReader level) {
+        return -level.getPathfindingCostFromLightLevels(pos);
     }
 }

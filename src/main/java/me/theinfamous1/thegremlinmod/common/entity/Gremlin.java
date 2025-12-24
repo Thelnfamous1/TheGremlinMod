@@ -26,12 +26,15 @@ import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
 import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
 import net.minecraft.world.entity.ai.navigation.PathNavigation;
 import net.minecraft.world.entity.ai.navigation.WallClimberNavigation;
+import net.minecraft.world.entity.ai.targeting.TargetingConditions;
 import net.minecraft.world.entity.monster.Enemy;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.pathfinder.PathType;
+import org.jetbrains.annotations.Nullable;
 import software.bernie.geckolib.animatable.GeoEntity;
 import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
 import software.bernie.geckolib.animation.*;
@@ -86,14 +89,19 @@ public class Gremlin extends AbstractGremlin implements GeoEntity, Enemy, Gremli
         this.goalSelector.addGoal(1, new RestrictRainGoal(this));
         this.goalSelector.addGoal(2, new GoToLandGoal(this, 1.3F, 15, 7));
         this.goalSelector.addGoal(2, new FleeRainGoal(this, 1.3F));
-        this.goalSelector.addGoal(3, new WaterAvoidingRandomStrollGoal(this, 1.0F, 0.0F));
+        this.goalSelector.addGoal(3, new WaterAvoidingRandomStrollGoal(this, 1.0F));
         this.goalSelector.addGoal(4, new LookAtPlayerGoal(this, Player.class, 10.0F));
         this.goalSelector.addGoal(5, new RandomLookAroundGoal(this));
 
 
         this.targetSelector.addGoal(1, (new HurtByTargetGoal(this)).setAlertOthers());
         this.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, Player.class,0, true, false, this::canPursueTarget));
-        this.targetSelector.addGoal(3, new NearestAttackableTargetGoal<>(this, LivingEntity.class, 0, true, false, le -> le.attackable() && this.canPursueTarget(le)));
+        this.targetSelector.addGoal(3, new NearestAttackableTargetGoal<>(this, LivingEntity.class, 0, true, false, le -> le.attackable() && this.canPursueTarget(le)){
+            @Override
+            public boolean canContinueToUse() {
+                return this.target != null ? this.targetConditions.test(this.mob, this.target) : super.canContinueToUse();
+            }
+        });
     }
 
     @Override
@@ -258,14 +266,15 @@ public class Gremlin extends AbstractGremlin implements GeoEntity, Enemy, Gremli
 
     @Override
     protected PathNavigation createNavigation(Level level) {
+        //return super.createNavigation(level);
         return new WallClimberNavigation(this, level);
     }
 
     @Override
     public void tick() {
         super.tick();
-        if (!this.level().isClientSide() && !this.onClimbableLadder()) {
-            this.setClimbing(this.horizontalCollision);
+        if (!this.level().isClientSide()) {
+            this.setClimbing(this.onClimbableLadder() || this.horizontalCollision);
         }
     }
 
@@ -372,12 +381,12 @@ public class Gremlin extends AbstractGremlin implements GeoEntity, Enemy, Gremli
         this.setPathfindingMalus(PathType.WATER_BORDER, waterPenalty);
     }
 
-    @Override
-    public boolean canAttack(LivingEntity target) {
-        return super.canAttack(target) && canPursueTarget(target);
+    private boolean canPursueTarget(LivingEntity target) {
+        return !target.isInWaterRainOrBubble() || target instanceof Player;
     }
 
-    private boolean canPursueTarget(LivingEntity target) {
-        return !target.isUnderWater() || target instanceof Player;
+    @Override
+    public float getWalkTargetValue(BlockPos pos, LevelReader level) {
+        return -level.getPathfindingCostFromLightLevels(pos);
     }
 }

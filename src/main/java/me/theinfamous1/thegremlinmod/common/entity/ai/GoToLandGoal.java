@@ -12,7 +12,7 @@ public class GoToLandGoal extends MoveToBlockGoal {
 
     @Override
     public boolean canUse() {
-        return super.canUse() && this.mob.isInWater();
+        return this.mob.isInWater() && super.canUse();
     }
 
     @Override
@@ -22,7 +22,7 @@ public class GoToLandGoal extends MoveToBlockGoal {
 
     @Override
     protected boolean isValidTarget(LevelReader level, BlockPos pos) {
-        BlockPos blockpos = pos.above();
-        return level.isEmptyBlock(blockpos) && level.isEmptyBlock(blockpos.above()) && level.getBlockState(pos).entityCanStandOn(level, pos, this.mob);
+        BlockPos above = pos.above();
+        return level.isEmptyBlock(above) && level.isEmptyBlock(above.above()) && level.getBlockState(pos).entityCanStandOn(level, pos, this.mob);
     }
 }

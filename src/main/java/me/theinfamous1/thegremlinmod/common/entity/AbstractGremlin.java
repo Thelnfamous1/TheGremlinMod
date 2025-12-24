@@ -299,7 +299,7 @@ public abstract class AbstractGremlin extends PathfinderMob{
 
     @Override
     protected float getWaterSlowDown() {
-        return 0.98F;
+        return 0.9F;
     }
 
     public float getSwimmingSlowdown(){

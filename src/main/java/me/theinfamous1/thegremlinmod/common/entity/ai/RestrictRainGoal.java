@@ -13,6 +13,6 @@ public class RestrictRainGoal extends RestrictSunGoal {
 
     @Override
     public boolean canUse() {
-        return this.hostMob.level().isRaining() && GoalUtils.hasGroundPathNavigation(this.hostMob);
+        return this.hostMob.level().isRainingAt(this.hostMob.blockPosition()) && GoalUtils.hasGroundPathNavigation(this.hostMob);
     }
 }
