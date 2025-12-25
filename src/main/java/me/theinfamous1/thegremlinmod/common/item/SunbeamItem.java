@@ -20,6 +20,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.ProjectileUtil;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.*;
 import software.bernie.geckolib.animatable.GeoItem;
@@ -57,7 +58,7 @@ public class SunbeamItem extends Item implements GeoItem {
     @Override
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand usedHand) {
         ItemStack itemstack = player.getItemInHand(usedHand);
-        level.playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.UI_BUTTON_CLICK, SoundSource.BLOCKS, 1.0F, level.getRandom().nextFloat() * 0.4F + 0.8F);
+        playSwitchSound(level, player);
         boolean switchValue = getSwitchValue(itemstack);
         setSwitchValue(itemstack, !switchValue);
         if(getSwitchValue(itemstack) && getTimer(itemstack) <= 0){
@@ -84,28 +85,109 @@ public class SunbeamItem extends Item implements GeoItem {
     }
 
     @Override
-    public void inventoryTick(ItemStack stack, Level level, Entity entity, int slotId, boolean isSelected) {
+    public void inventoryTick(ItemStack stack, Level level, Entity user, int slotId, boolean isSelected) {
         if(getSwitchValue(stack) && getTimer(stack) > 0){
             if(!level.isClientSide){
-                HitResult pick = this.pick(entity, 0);
-                if(pick instanceof EntityHitResult entityHitResult && entityHitResult.getEntity().getType().is(TGMTags.VULNERABLE_TO_SUNBEAM)){
-                    DamageSource sunbeamDamageSource = level.damageSources().magic();
-                    if(entity.invulnerableTime <= 0 || sunbeamDamageSource.is(DamageTypeTags.BYPASSES_COOLDOWN)){
-                        entityHitResult.getEntity().hurt(sunbeamDamageSource, Config.SUNBEAM_DAMAGE.get());
+                switch (Config.SUNBEAM_DETECTION_MODE.get()){
+                    case PINPOINT -> {
+                        HitResult pick = pick(user, 0);
+                        if (pick instanceof EntityHitResult entityHitResult) {
+                            Entity hitEntity = entityHitResult.getEntity();
+                            applySunbeamDamage(level, user, hitEntity);
+                        }
+                    }
+                    case FOCUSED -> {
+                        double maxDistance = Config.SUNBEAM_RANGE.get();
+                        double focusAngle = Mth.clamp(Config.SUNBEAM_FOCUS_ANGLE.get(), 0, 360);
+                        for (Entity hitEntity : level.getEntities(user, user.getBoundingBox().inflate(maxDistance), e -> !e.isSpectator() && e.isPickable())) {
+                            if (isWithinCoverage(user, hitEntity, maxDistance, focusAngle)) {
+                                applySunbeamDamage(level, user, hitEntity);
+                            }
+                        }
+                    }
+                    default -> {
+                        Vec3 eyePos = user.getEyePosition(0);
+                        double maxDistance = Config.SUNBEAM_RANGE.get();
+                        for (Entity hitEntity : level.getEntities(user, user.getBoundingBox().inflate(maxDistance), e -> !e.isSpectator() && e.isPickable())) {
+                            if (isWithinCoverage(user, hitEntity, eyePos, maxDistance)) {
+                                applySunbeamDamage(level, user, hitEntity);
+                            }
+                        }
                     }
                 }
+
             }
             setTimer(stack, Math.max(0, getTimer(stack) - 1));
             if(getTimer(stack) <= 0){
+                playSwitchSound(level, user);
                 setSwitchValue(stack, false);
-                if(entity instanceof Player player){
+                if(user instanceof Player player){
                     player.getCooldowns().addCooldown(stack.getItem(), getSunbeamUseCooldownTimeTicks());
                 }
             }
         }
     }
 
-    private HitResult pick(Entity entity, float partialTick) {
+    private static void playSwitchSound(Level level, Entity user) {
+        level.playSound(null, user.getX(), user.getY(), user.getZ(), SoundEvents.UI_BUTTON_CLICK, SoundSource.BLOCKS, 1.0F, level.getRandom().nextFloat() * 0.4F + 0.8F);
+    }
+
+    private static boolean isWithinCoverage(Entity user, Entity hitEntity, Vec3 eyePos, double maxDistance){
+        Vec3 targetPos = hitEntity.position().add(0, hitEntity.getBbHeight() * 0.5D, 0);
+        Vec3 vectorToTarget = eyePos.vectorTo(targetPos);
+        return isWithinDistance(user, eyePos, maxDistance, targetPos, vectorToTarget);
+    }
+
+    private static boolean isWithinCoverage(Entity user, Entity hitEntity, double maxDistance, double arcAngle) {
+        Vec3 eyePos = user.getEyePosition(0);
+        Vec3 lookVec = user.getLookAngle().normalize();
+        Vec3 targetPos = hitEntity.position().add(0, hitEntity.getBbHeight() * 0.5D, 0);
+        Vec3 vectorToTarget = eyePos.vectorTo(targetPos);
+        if (!isWithinDistance(user, eyePos, maxDistance, targetPos, vectorToTarget)) return false;
+
+        Vec3 targetAngle = vectorToTarget.normalize();
+        double dot = lookVec.dot(targetAngle);
+        return isWithinCoverageAngle(arcAngle, dot);
+    }
+
+    private static boolean isWithinDistance(Entity user, Vec3 eyePos, double maxDistance, Vec3 targetPos, Vec3 vectorToTarget) {
+        double maxDistanceSqr = Mth.square(maxDistance);
+        ClipContext context = new ClipContext(eyePos, targetPos, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, user);
+        HitResult blockPickResult = user.level().clip(context);
+        double distanceToBPRSqr = blockPickResult.getLocation().distanceToSqr(eyePos);
+        if (blockPickResult.getType() != HitResult.Type.MISS) {
+            maxDistanceSqr = distanceToBPRSqr;
+        }
+
+        double distanceToTargetSqr = vectorToTarget.lengthSqr();
+        return distanceToTargetSqr <= maxDistanceSqr;
+    }
+
+    private static boolean isWithinCoverageAngle(double coverageDeg, double dot) {
+        if (coverageDeg <= 180) {
+            // Forward arc
+            double halfAngle = coverageDeg * 0.5D;
+            double minDot = Math.cos(Math.toRadians(halfAngle));
+            return dot >= minDot;
+        } else {
+            // Blind spot behind player
+            double blindArc = 360 - coverageDeg;
+            double blindHalf = blindArc * 0.5D;
+            double blindDot = Math.cos(Math.toRadians(blindHalf));
+            return dot > -blindDot;
+        }
+    }
+
+    private static void applySunbeamDamage(Level level, Entity entity, Entity hitEntity) {
+        if(hitEntity.getType().is(TGMTags.VULNERABLE_TO_SUNBEAM)){
+            DamageSource sunbeamDamageSource = level.damageSources().magic();
+            if(entity.invulnerableTime <= 0 || sunbeamDamageSource.is(DamageTypeTags.BYPASSES_COOLDOWN)){
+                hitEntity.hurt(sunbeamDamageSource, Config.SUNBEAM_DAMAGE.get());
+            }
+        }
+    }
+
+    private static HitResult pick(Entity entity, float partialTick) {
         double interactionRange = Config.SUNBEAM_RANGE.get();
         double interactionRangeSqr = Mth.square(interactionRange);
         Vec3 eyePosition = entity.getEyePosition(partialTick);
@@ -118,9 +200,9 @@ public class SunbeamItem extends Item implements GeoItem {
 
         Vec3 viewVector = entity.getViewVector(partialTick);
         Vec3 targetVector = eyePosition.add(viewVector.x * interactionRange, viewVector.y * interactionRange, viewVector.z * interactionRange);
-        AABB aabb = entity.getBoundingBox().expandTowards(viewVector.scale(interactionRange)).inflate(1.0, 1.0, 1.0);
+        AABB searchBox = entity.getBoundingBox().expandTowards(viewVector.scale(interactionRange)).inflate(1.0, 1.0, 1.0);
         EntityHitResult entityhitresult = ProjectileUtil.getEntityHitResult(
-                entity, eyePosition, targetVector, aabb, p_234237_ -> !p_234237_.isSpectator() && p_234237_.isPickable(), interactionRangeSqr
+                entity, eyePosition, targetVector, searchBox, e -> !e.isSpectator() && e.isPickable(), interactionRangeSqr
         );
         return entityhitresult != null && entityhitresult.getLocation().distanceToSqr(eyePosition) < distanceToBPRSqr
                 ? filterHitResult(entityhitresult, eyePosition, interactionRange)
