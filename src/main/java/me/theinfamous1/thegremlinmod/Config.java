@@ -16,5 +16,5 @@ public class Config {
     public static final ModConfigSpec.EnumValue<SunbeamDetectionMode> SUNBEAM_DETECTION_MODE = BUILDER.comment("The logic to use for sunbeam hit detection.").defineEnum("sunbeam_detection_mode", SunbeamDetectionMode.SURROUND);
     public static final ModConfigSpec.IntValue SUNBEAM_FOCUS_ANGLE = BUILDER.comment("When the sunbeam detection mode is configured to FOCUS, use this angle to determine the size of the area in which the sunbeam detects targets.").defineInRange("sunbeam_focus_angle", 90, 0, 360);
 
-    static final ModConfigSpec SPEC = BUILDER.build();
+    public static final ModConfigSpec SPEC = BUILDER.build();
 }

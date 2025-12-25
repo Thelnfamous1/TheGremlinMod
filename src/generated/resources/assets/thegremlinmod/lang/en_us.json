@@ -7,5 +7,12 @@
   "item.thegremlinmod.mogwai_spawn_egg": "Mogwai Spawn Egg",
   "item.thegremlinmod.sun_drop": "Sun Drop",
   "item.thegremlinmod.sunbeam": "Sunbeam",
-  "itemGroup.thegremlinmod": "The Gremlin Mod"
+  "itemGroup.thegremlinmod": "The Gremlin Mod",
+  "thegremlinmod.configuration.cocoon_hatch_time": "Cocoon Hatch Time",
+  "thegremlinmod.configuration.max_sunbeam_use_time": "Max Sunbeam Use Time",
+  "thegremlinmod.configuration.sunbeam_damage": "Sunbeam Damage",
+  "thegremlinmod.configuration.sunbeam_detection_mode": "Sunbeam Detection Mode",
+  "thegremlinmod.configuration.sunbeam_focus_angle": "Sunbeam Focus Angle",
+  "thegremlinmod.configuration.sunbeam_range": "Sunbeam Range",
+  "thegremlinmod.configuration.sunbeam_use_cooldown_time": "Sunbeam Use Cooldown Time"
 }
