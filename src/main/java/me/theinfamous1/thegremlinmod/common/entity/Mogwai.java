@@ -1,10 +1,8 @@
 package me.theinfamous1.thegremlinmod.common.entity;
 
+import me.theinfamous1.thegremlinmod.Config;
 import me.theinfamous1.thegremlinmod.TheGremlinMod;
-import me.theinfamous1.thegremlinmod.common.entity.ai.GoToLandGoal;
-import me.theinfamous1.thegremlinmod.common.entity.ai.MogwaiRestGoal;
-import me.theinfamous1.thegremlinmod.common.entity.ai.FleeRainGoal;
-import me.theinfamous1.thegremlinmod.common.entity.ai.RestrictRainGoal;
+import me.theinfamous1.thegremlinmod.common.entity.ai.*;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.particles.ItemParticleOption;
@@ -41,6 +39,7 @@ public class Mogwai extends AbstractGremlin implements GeoEntity{
     private static final RawAnimation IDLE = RawAnimation.begin().thenPlay("mogwai.idle");
     private static final RawAnimation IDLE_2 = RawAnimation.begin().thenPlay("mogwai.idle2");
     private static final RawAnimation DUPLICATE = RawAnimation.begin().thenPlay("mogwai.duplicate");
+    private static final RawAnimation HIDE_DUPLICATE = RawAnimation.begin().thenLoop("mogwai.hide_duplicate");
     private static final RawAnimation SWIM = RawAnimation.begin().thenPlay("mogwai.swim");
     private static final RawAnimation CRY = RawAnimation.begin().thenPlay("mogwai.cry");
     private static final RawAnimation WALK = RawAnimation.begin().thenPlay("mogwai.walk");
@@ -48,14 +47,16 @@ public class Mogwai extends AbstractGremlin implements GeoEntity{
     private static final RawAnimation EAT = RawAnimation.begin().thenPlay("mogwai.eat");
     private static final RawAnimation SLEEP = RawAnimation.begin().thenPlay("mogwai.sleep");
     private static final RawAnimation HURT = RawAnimation.begin().thenPlay("mogwai.hurt");
-    private static final RawAnimation DIE = RawAnimation.begin().thenPlay("mogwai.die");
+    private static final RawAnimation DIE = RawAnimation.begin().thenPlay("mogwai.death");
     private static final RawAnimation COCOON = RawAnimation.begin().thenPlay("mogwai.cocoon");
     private final AnimatableInstanceCache animatableInstanceCache = GeckoLibUtil.createInstanceCache(this);
 
-    public static final int DUPLICATION_ANIMATION_TIME = 30;
-    public static final int EATING_ANIMATION_TIME = 40;
+    public static final int DUPLICATION_ANIMATION_TIME = Mth.ceil(6 * 20);
+    public static final int EATING_ANIMATION_TIME = Mth.ceil(0.5F * 20);
     public static final int COCOONING_ANIMATION_TIME = 20;
-    public static final int DEATH_ANIMATION_TIME = 20;
+    public static final int DEATH_ANIMATION_TIME = Mth.ceil(1.5417F * 20);
+    public static final int IDLE1_ANIMATION_TIME = Mth.ceil(2 * 20);
+    public static final int IDLE2_ANIMATION_TIME = Mth.ceil(4 * 20);
     protected int eatAnimationTicks;
     protected int cocooningAnimationTicks;
     private boolean fedPastBedtime;
@@ -108,8 +109,13 @@ public class Mogwai extends AbstractGremlin implements GeoEntity{
     }
 
     @Override
-    protected int getDuplicationTime() {
+    protected int getDefaultDuplicationTime() {
         return DUPLICATION_ANIMATION_TIME;
+    }
+
+    @Override
+    protected long getDefaultDuplicationCooldownTime() {
+        return Config.MOGWAI_DUPLICATION_COOLDOWN.get();
     }
 
     @Override
@@ -117,16 +123,22 @@ public class Mogwai extends AbstractGremlin implements GeoEntity{
         super.onSyncedDataUpdated(key);
         if(key.equals(AbstractGremlin.DATA_ACTION_FLAGS_ID)){
             if (this.isEating()) {
-                if (this.eatAnimationTicks == 0) this.eatAnimationTicks = Mogwai.EATING_ANIMATION_TIME;
+                if (this.eatAnimationTicks == 0) this.eatAnimationTicks = this.getTimeToEat(this.getMainHandItem());
             } else if (this.eatAnimationTicks > 0) {
                 this.eatAnimationTicks = 0;
             }
+            /*
             if (this.isCocooning()) {
                 if (this.cocooningAnimationTicks == 0) this.cocooningAnimationTicks = Mogwai.COCOONING_ANIMATION_TIME;
             } else if (this.cocooningAnimationTicks > 0) {
                 this.cocooningAnimationTicks = 0;
             }
+            */
         }
+    }
+
+    private int getTimeToEat(ItemStack mainHandItem){
+        return mainHandItem.has(DataComponents.FOOD) ? mainHandItem.get(DataComponents.FOOD).eatDurationTicks() : EATING_ANIMATION_TIME;
     }
 
     @Override
@@ -155,8 +167,8 @@ public class Mogwai extends AbstractGremlin implements GeoEntity{
             if(TheGremlinMod.isDevelopmentEnvironment()){
                 TheGremlinMod.LOGGER.info("Triggered eating for {}", this);
             }
-            this.setEating(true);
             this.startEatingItem(itemstack);
+            this.setEating(true);
             this.removeInteractionItem(player, itemstack);
             return InteractionResult.SUCCESS;
         } else {
@@ -178,8 +190,13 @@ public class Mogwai extends AbstractGremlin implements GeoEntity{
 
     @Override
     public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
+        controllers.add(new AnimationController<>(this, "Duplicate", this::animateDuplicate));
         controllers.add(new AnimationController<>(this, "Move", this::animateMovement));
         controllers.add(new AnimationController<>(this, "Action", this::animateAction));
+    }
+
+    private PlayState animateDuplicate(AnimationState<Mogwai> state) {
+        return GremlinAnimationHandlers.animateDuplicate(this, state, HIDE_DUPLICATE);
     }
 
     private PlayState animateMovement(AnimationState<Mogwai> state) {
@@ -187,7 +204,7 @@ public class Mogwai extends AbstractGremlin implements GeoEntity{
     }
 
     private PlayState animateAction(AnimationState<Mogwai> state) {
-        state.setControllerSpeed(1.0F);
+        //state.setControllerSpeed(1.0F);
         if(this.hasPose(Pose.DYING)){
             return state.setAndContinue(DIE);
         } else if(state.isCurrentAnimation(DIE)){
@@ -195,7 +212,7 @@ public class Mogwai extends AbstractGremlin implements GeoEntity{
         }
 
         if(this.isAnimatingHurt()){
-            state.setControllerSpeed(2.0F);
+            //state.setControllerSpeed(2.0F);
             return state.setAndContinue(HURT);
         } else if(state.isCurrentAnimation(HURT)){
             state.resetCurrentAnimation();
@@ -207,11 +224,13 @@ public class Mogwai extends AbstractGremlin implements GeoEntity{
             state.resetCurrentAnimation();
         }
 
+        /*
         if(this.isCocooning()){
             return state.setAndContinue(COCOON);
         } else if(state.isCurrentAnimation(COCOON)){
             state.resetCurrentAnimation();
         }
+         */
 
         if(this.isDuplicating()){
             return state.setAndContinue(DUPLICATE);
@@ -250,7 +269,7 @@ public class Mogwai extends AbstractGremlin implements GeoEntity{
         this.updateEating();
 
         // cocooning
-        this.updateCocooning();
+        //this.updateCocooning();
     }
 
     private void updateCocooning() {
@@ -264,15 +283,19 @@ public class Mogwai extends AbstractGremlin implements GeoEntity{
             }
             this.setCocooning(false);
             if(!this.level().isClientSide()){
-                MogwaiCocoon cocoon = this.convertTo(TheGremlinMod.MOGWAI_COCOON.get(), false);
-                if(cocoon != null){
-                    if(TheGremlinMod.isDevelopmentEnvironment()){
-                        TheGremlinMod.LOGGER.info("Spawned cocoon for {}", this);
-                    }
-                    cocoon.setSpawning(true);
-                    EventHooks.onLivingConvert(this, cocoon);
-                }
+                this.convertToCocoon();
             }
+        }
+    }
+
+    private void convertToCocoon() {
+        MogwaiCocoon cocoon = this.convertTo(TheGremlinMod.MOGWAI_COCOON.get(), false);
+        if(cocoon != null){
+            if(TheGremlinMod.isDevelopmentEnvironment()){
+                TheGremlinMod.LOGGER.info("Spawned cocoon for {}", this);
+            }
+            //cocoon.setSpawning(true);
+            EventHooks.onLivingConvert(this, cocoon);
         }
     }
 
@@ -292,33 +315,34 @@ public class Mogwai extends AbstractGremlin implements GeoEntity{
                     if(TheGremlinMod.isDevelopmentEnvironment()){
                         TheGremlinMod.LOGGER.info("Triggered cocooning for {}", this);
                     }
-                    this.setCocooning(true);
+                    //this.setCocooning(true);
+                    this.convertToCocoon();
                 }
             }
         }
     }
 
     private void updateEatingItem() {
-        if(this.shouldChew() && this.eatAnimationTicks % 2 == 0){
-            this.addEatingParticles(this.getMainHandItem(), 5);
+        ItemStack mainHandItem = this.getMainHandItem();
+        if(this.shouldChew(mainHandItem)){
+            this.addEatingParticles(mainHandItem, 5);
         }
         if(this.shouldSwallow()){
-            ItemStack eatResult = this.eatFood(this.getMainHandItem());
+            ItemStack eatResult = this.eatFood(mainHandItem);
             this.setItemInHand(InteractionHand.MAIN_HAND, eatResult);
         }
     }
 
-    private float getEatProgress() {
-        return Mth.clamp((float) (EATING_ANIMATION_TIME - this.eatAnimationTicks) / EATING_ANIMATION_TIME, 0.0F, 1.0F);
-    }
-
-    private boolean shouldChew(){
-        float eatProgress = this.getEatProgress();
-        return eatProgress >= 0.375 && eatProgress < 0.69F;
+    private boolean shouldChew(ItemStack mainHandItem){
+        int timeToEat = this.getTimeToEat(mainHandItem);
+        int ticksEating = timeToEat - this.eatAnimationTicks;
+        int chewThreshold = (int)((float)timeToEat * 0.21875F);
+        boolean flag = ticksEating > chewThreshold;
+        return flag && this.eatAnimationTicks % 4 == 0;
     }
 
     private boolean shouldSwallow(){
-        return this.getEatProgress() >= 0.69F;
+        return this.eatAnimationTicks == 1;
     }
 
     @Override
@@ -379,19 +403,22 @@ public class Mogwai extends AbstractGremlin implements GeoEntity{
     }
 
     @Override
-    public boolean isPerformingAnimatedAction() {
+    public boolean isPerformingSpecialAction() {
         return this.isDuplicating() || this.isCrying() || this.isEating() || this.isLying() || this.isCocooning();
     }
 
     @Override
-    public boolean canWalkWhilePerformingAnimatedAction() {
-        return this.isDuplicating() || this.isCrying() || this.isEating();
+    public boolean canWalkWhilePerformingSpecialAction() {
+        return false;
     }
 
     @Override
     public void customServerAiStep() {
         super.customServerAiStep();
         this.updateCrying();
+        if(this.isPerformingSpecialAction() && !this.canWalkWhilePerformingSpecialAction()){
+            this.stopInPlace();
+        }
     }
 
     private void updateCrying() {
@@ -428,6 +455,16 @@ public class Mogwai extends AbstractGremlin implements GeoEntity{
 
     @Override
     public float getWalkTargetValue(BlockPos pos, LevelReader level) {
-        return -level.getPathfindingCostFromLightLevels(pos);
+        return level.getPathfindingCostFromLightLevels(pos);
+    }
+
+    @Override
+    protected int getMaxDeathAnimationTime() {
+        return DEATH_ANIMATION_TIME;
+    }
+
+    @Override
+    protected int getSwitchIdleCooldownTime() {
+        return (this.isUsingAlternateIdle() ? IDLE2_ANIMATION_TIME : IDLE1_ANIMATION_TIME) * this.random.nextInt(1, 5);
     }
 }

@@ -65,19 +65,23 @@ public class TheGremlinMod {
 
     public static final DeferredHolder<EntityType<?>, EntityType<Mogwai>> MOGWAI = ENTITY_TYPES.register("mogwai", () ->
             EntityType.Builder.of(Mogwai::new, MobCategory.CREATURE)
-                    .sized(0.25F, 0.75F)
+                    .sized(pixelsToBlocks(8.0F), pixelsToBlocks(17.5F))
                     .build(location("mogwai").toString()));
 
     public static final DeferredHolder<EntityType<?>, EntityType<MogwaiCocoon>> MOGWAI_COCOON = ENTITY_TYPES.register("mogwai_cocoon", () ->
             EntityType.Builder.of(MogwaiCocoon::new, MobCategory.CREATURE)
-                    .sized(0.375F, 0.625F)
+                    .sized(pixelsToBlocks(14.0F), pixelsToBlocks(21.5F))
                     .fireImmune()
                     .build(location("mogwai_cocoon").toString()));
 
     public static final DeferredHolder<EntityType<?>, EntityType<Gremlin>> GREMLIN = ENTITY_TYPES.register("gremlin", () ->
             EntityType.Builder.of(Gremlin::new, MobCategory.MONSTER)
-                    .sized(0.25F, 0.75F)
+                    .sized(pixelsToBlocks(7.0F), pixelsToBlocks(22.5F))
                     .build(location("gremlin").toString()));
+
+    private static float pixelsToBlocks(float pixels){
+        return pixels / 16.0F;
+    }
 
 
     public static final DeferredItem<Item> MOGWAI_SPAWN_EGG = ITEMS.registerItem("mogwai_spawn_egg", p -> new DeferredSpawnEggItem(MOGWAI, 0xcacaca, 0x7a602a, p));

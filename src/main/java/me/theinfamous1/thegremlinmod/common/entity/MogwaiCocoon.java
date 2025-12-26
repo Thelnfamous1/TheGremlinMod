@@ -14,6 +14,7 @@ import net.minecraft.server.level.ServerEntity;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.tags.DamageTypeTags;
+import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.*;
@@ -36,9 +37,9 @@ public class MogwaiCocoon extends Mob implements GeoEntity, GremlinConvert {
     private final AnimatableInstanceCache animatableInstanceCache = GeckoLibUtil.createInstanceCache(this);
     private static final EntityDataAccessor<Boolean> DATA_SPAWNING = SynchedEntityData.defineId(MogwaiCocoon.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Boolean> DATA_HATCHING = SynchedEntityData.defineId(MogwaiCocoon.class, EntityDataSerializers.BOOLEAN);
-    public static final int SPAWN_ANIMATION_TIME = 20;
+    public static final int SPAWN_ANIMATION_TIME = Mth.ceil(4 * 20);
     private int spawnAnimationTicks;
-    public static final int HATCH_ANIMATION_TIME = 20;
+    public static final int HATCH_ANIMATION_TIME = Mth.ceil(4 * 20);
     private int hatchAnimationTicks;
     private boolean hatched;
 
@@ -160,14 +161,18 @@ public class MogwaiCocoon extends Mob implements GeoEntity, GremlinConvert {
             this.setHatched(true);
             this.setHatching(false);
             if(!this.level().isClientSide()){
-                Gremlin gremlin = this.convertTo(TheGremlinMod.GREMLIN.get(), false);
-                if(gremlin != null){
-                    if(TheGremlinMod.isDevelopmentEnvironment()){
-                        TheGremlinMod.LOGGER.info("Spawned gremlin for {}", this);
-                    }
-                    EventHooks.onLivingConvert(this, gremlin);
-                }
+                this.convertToGremlin();
             }
+        }
+    }
+
+    private void convertToGremlin() {
+        Gremlin gremlin = this.convertTo(TheGremlinMod.GREMLIN.get(), false);
+        if(gremlin != null){
+            if(TheGremlinMod.isDevelopmentEnvironment()){
+                TheGremlinMod.LOGGER.info("Spawned gremlin for {}", this);
+            }
+            EventHooks.onLivingConvert(this, gremlin);
         }
     }
 

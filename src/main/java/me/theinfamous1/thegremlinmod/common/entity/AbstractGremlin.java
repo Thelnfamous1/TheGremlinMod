@@ -14,6 +14,7 @@ import net.minecraft.world.item.alchemy.PotionContents;
 import net.minecraft.world.item.alchemy.Potions;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.pathfinder.PathType;
+import net.minecraft.world.phys.Vec3;
 
 public abstract class AbstractGremlin extends PathfinderMob{
     public static final long DUPLICATION_COOLDOWN_TIME = 600L;
@@ -49,14 +50,14 @@ public abstract class AbstractGremlin extends PathfinderMob{
         super.onSyncedDataUpdated(key);
         if (key.equals(DATA_ACTION_FLAGS_ID)) {
             if (this.isDuplicating()) {
-                if (this.duplicateAnimationTicks == 0) this.duplicateAnimationTicks = this.getDuplicationTime();
+                if (this.duplicateAnimationTicks == 0) this.duplicateAnimationTicks = this.getDefaultDuplicationTime();
             } else if (this.duplicateAnimationTicks > 0) {
                 this.duplicateAnimationTicks = 0;
             }
         }
     }
 
-    protected abstract int getDuplicationTime();
+    protected abstract int getDefaultDuplicationTime();
 
     protected boolean getActionFlag(int flag) {
         return (this.entityData.get(DATA_ACTION_FLAGS_ID) & 1 << flag) != 0;
@@ -98,10 +99,14 @@ public abstract class AbstractGremlin extends PathfinderMob{
     @Override
     protected void tickDeath() {
         ++this.deathAnimationTicks;
-        if (this.deathAnimationTicks >= Mogwai.DEATH_ANIMATION_TIME && !this.level().isClientSide() && !this.isRemoved()) {
+        if (this.deathAnimationTicks >= getMaxDeathAnimationTime() && !this.level().isClientSide() && !this.isRemoved()) {
             this.level().broadcastEntityEvent(this, EntityEvent.POOF);
             this.remove(RemovalReason.KILLED);
         }
+    }
+
+    protected int getMaxDeathAnimationTime() {
+        return 20;
     }
 
     @Override
@@ -135,19 +140,23 @@ public abstract class AbstractGremlin extends PathfinderMob{
         return this.hurtTime > 0;
     }
 
-    public abstract boolean isPerformingAnimatedAction();
+    public abstract boolean isPerformingSpecialAction();
 
-    public abstract boolean canWalkWhilePerformingAnimatedAction();
+    public abstract boolean canWalkWhilePerformingSpecialAction();
 
     protected void resetDuplicationCooldown() {
         if(TheGremlinMod.isDevelopmentEnvironment()){
             TheGremlinMod.LOGGER.info("Reset duplication cooldown for {}", this);
         }
-        this.duplicationCooldown = DUPLICATION_COOLDOWN_TIME;
+        this.duplicationCooldown = this.getDefaultDuplicationCooldownTime();
         if(TheGremlinMod.isDevelopmentEnvironment()){
             TheGremlinMod.LOGGER.info("Disabled duplication for {}", this);
         }
         this.setCanDuplicate(false);
+    }
+
+    protected long getDefaultDuplicationCooldownTime() {
+        return DUPLICATION_COOLDOWN_TIME;
     }
 
     @Override
@@ -164,9 +173,13 @@ public abstract class AbstractGremlin extends PathfinderMob{
             this.switchIdleCooldown--;
             if(this.switchIdleCooldown == 0){
                 this.setUsingAlternateIdle(this.random.nextBoolean());
-                this.switchIdleCooldown = SWITCH_IDLE_COOLDOWN_TIME;
+                this.switchIdleCooldown = this.getSwitchIdleCooldownTime();
             }
         }
+    }
+
+    protected int getSwitchIdleCooldownTime() {
+        return SWITCH_IDLE_COOLDOWN_TIME;
     }
 
     @Override
@@ -202,12 +215,18 @@ public abstract class AbstractGremlin extends PathfinderMob{
     protected void duplicate() {
         AbstractGremlin gremlin = this.getDuplicationType().create(this.level());
         if (gremlin != null) {
-            gremlin.moveTo(this.position());
+            gremlin.moveTo(this.getDuplicateSpawnPosition(), this.getYRot(), this.getXRot());
             gremlin.setPersistenceRequired();
             gremlin.resetDuplicationCooldown();
             this.resetDuplicationCooldown();
             this.level().addFreshEntity(gremlin);
         }
+    }
+
+    protected Vec3 getDuplicateSpawnPosition() {
+        Vec3 look = this.getLookAngle();
+        Vec3 horizontalLook = new Vec3(look.x, 0, look.z).normalize();
+        return this.position().subtract(horizontalLook.scale(this.getScale()));
     }
 
     protected abstract EntityType<? extends AbstractGremlin> getDuplicationType();

@@ -1,8 +1,10 @@
 package me.theinfamous1.thegremlinmod.common.entity;
 
+import me.theinfamous1.thegremlinmod.Config;
 import me.theinfamous1.thegremlinmod.TheGremlinMod;
 import me.theinfamous1.thegremlinmod.common.entity.ai.FleeRainGoal;
 import me.theinfamous1.thegremlinmod.common.entity.ai.GoToLandGoal;
+import me.theinfamous1.thegremlinmod.common.entity.ai.GremlinMeleeAttackGoal;
 import me.theinfamous1.thegremlinmod.common.entity.ai.RestrictRainGoal;
 import me.theinfamous1.thegremlinmod.common.util.TGMTags;
 import net.minecraft.core.BlockPos;
@@ -16,6 +18,7 @@ import net.minecraft.server.level.ServerEntity;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.*;
@@ -26,7 +29,6 @@ import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
 import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
 import net.minecraft.world.entity.ai.navigation.PathNavigation;
 import net.minecraft.world.entity.ai.navigation.WallClimberNavigation;
-import net.minecraft.world.entity.ai.targeting.TargetingConditions;
 import net.minecraft.world.entity.monster.Enemy;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.player.Player;
@@ -34,7 +36,6 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.pathfinder.PathType;
-import org.jetbrains.annotations.Nullable;
 import software.bernie.geckolib.animatable.GeoEntity;
 import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
 import software.bernie.geckolib.animation.*;
@@ -49,17 +50,22 @@ public class Gremlin extends AbstractGremlin implements GeoEntity, Enemy, Gremli
     private static final RawAnimation RUN = RawAnimation.begin().thenPlay("gremlin.run");
     private static final RawAnimation SWIM = RawAnimation.begin().thenPlay("gremlin.swim");
     private static final RawAnimation DUPLICATE = RawAnimation.begin().thenPlay("gremlin.duplicate");
+    private static final RawAnimation HIDE_DUPLICATE = RawAnimation.begin().thenLoop("gremlin.hide_duplicate");
     private static final RawAnimation ATTACK = RawAnimation.begin().thenPlay("gremlin.attack");
     private static final RawAnimation ATTACK_2 = RawAnimation.begin().thenPlay("gremlin.attack2");
     private static final RawAnimation CLIMB = RawAnimation.begin().thenPlay("gremlin.climb");
     private static final RawAnimation HURT = RawAnimation.begin().thenPlay("gremlin.hurt");
-    private static final RawAnimation DIE = RawAnimation.begin().thenPlay("gremlin.die");
+    private static final RawAnimation DIE = RawAnimation.begin().thenPlay("gremlin.death");
     private final AnimatableInstanceCache animatableInstanceCache = GeckoLibUtil.createInstanceCache(this);
 
-    public static final int DUPLICATION_ANIMATION_TIME = 30;
+    public static final int DUPLICATION_ANIMATION_TIME = Mth.ceil(6 * 20);
     private static final int HATCH_ANIMATION_TIME = 20;
     private int hatchAnimationTicks;
-    private static final int ATTACK_ANIMATION_TIME = 20;
+    private static final int ATTACK_1_ANIMATION_TIME = Mth.ceil(0.75F * 20);
+    private static final int ATTACK_2_ANIMATION_TIME = Mth.ceil(1.25F * 20);
+    private static final int DEATH_ANIMATION_TIME = Mth.ceil(1.5F * 20);
+    public static final int IDLE1_ANIMATION_TIME = Mth.ceil(1.5 * 20);
+    public static final int IDLE2_ANIMATION_TIME = Mth.ceil(3.5 * 20);
     private int attackAnimationTicks;
 
     private static final EntityDataAccessor<Boolean> DATA_USE_ALTERNATE_ATTACK = SynchedEntityData.defineId(Gremlin.class, EntityDataSerializers.BOOLEAN);
@@ -85,7 +91,7 @@ public class Gremlin extends AbstractGremlin implements GeoEntity, Enemy, Gremli
     @Override
     protected void registerGoals() {
         this.goalSelector.addGoal(1, new FloatGoal(this));
-        this.goalSelector.addGoal(1, new MeleeAttackGoal(this, 1.3F, true));
+        this.goalSelector.addGoal(1, new GremlinMeleeAttackGoal(this, 1.3F, true));
         this.goalSelector.addGoal(1, new RestrictRainGoal(this));
         this.goalSelector.addGoal(2, new GoToLandGoal(this, 1.3F, 15, 7));
         this.goalSelector.addGoal(2, new FleeRainGoal(this, 1.3F));
@@ -130,8 +136,13 @@ public class Gremlin extends AbstractGremlin implements GeoEntity, Enemy, Gremli
     }
 
     @Override
-    protected int getDuplicationTime() {
+    protected int getDefaultDuplicationTime() {
         return DUPLICATION_ANIMATION_TIME;
+    }
+
+    @Override
+    protected long getDefaultDuplicationCooldownTime() {
+        return Config.GREMLIN_DUPLICATION_COOLDOWN.get();
     }
 
     @Override
@@ -144,11 +155,13 @@ public class Gremlin extends AbstractGremlin implements GeoEntity, Enemy, Gremli
     public void onSyncedDataUpdated(EntityDataAccessor<?> key) {
         super.onSyncedDataUpdated(key);
         if(key.equals(AbstractGremlin.DATA_ACTION_FLAGS_ID)){
+            /*
             if (this.isHatching()) {
                 if (this.hatchAnimationTicks == 0) this.hatchAnimationTicks = HATCH_ANIMATION_TIME;
             } else if (this.hatchAnimationTicks > 0) {
                 this.hatchAnimationTicks = 0;
             }
+             */
         }
     }
 
@@ -170,7 +183,7 @@ public class Gremlin extends AbstractGremlin implements GeoEntity, Enemy, Gremli
         this.updateSwingTime();
         this.updateNoActionTime();
         super.aiStep();
-        this.updateHatching();
+        //this.updateHatching();
 
         if (this.attackAnimationTicks > 0) {
             --this.attackAnimationTicks;
@@ -192,8 +205,13 @@ public class Gremlin extends AbstractGremlin implements GeoEntity, Enemy, Gremli
 
     @Override
     public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
+        controllers.add(new AnimationController<>(this, "Duplicate", this::animateDuplicate));
         controllers.add(new AnimationController<>(this, "Move", this::animateMovement));
         controllers.add(new AnimationController<>(this, "Action", this::animateAction));
+    }
+
+    private PlayState animateDuplicate(AnimationState<Gremlin> state) {
+        return GremlinAnimationHandlers.animateDuplicate(this, state, HIDE_DUPLICATE);
     }
 
     private PlayState animateMovement(AnimationState<Gremlin> state) {
@@ -201,7 +219,7 @@ public class Gremlin extends AbstractGremlin implements GeoEntity, Enemy, Gremli
     }
 
     private PlayState animateAction(AnimationState<Gremlin> state) {
-        state.setControllerSpeed(1.0F);
+        //state.setControllerSpeed(1.0F);
         if(this.hasPose(Pose.DYING)){
             return state.setAndContinue(DIE);
         } else if(state.isCurrentAnimation(DIE)){
@@ -209,17 +227,19 @@ public class Gremlin extends AbstractGremlin implements GeoEntity, Enemy, Gremli
         }
 
         if(this.isAnimatingHurt()){
-            state.setControllerSpeed(2.0F);
+            //state.setControllerSpeed(2.0F);
             return state.setAndContinue(HURT);
         } else if(state.isCurrentAnimation(HURT)){
             state.resetCurrentAnimation();
         }
 
+        /*
         if(this.isHatching()){
             return state.setAndContinue(HATCHING);
         } else if(state.isCurrentAnimation(HATCHING)){
             state.resetCurrentAnimation();
         }
+         */
 
         if(this.isAttacking()){
             if(this.isUsingAlternateAttack()){
@@ -250,13 +270,13 @@ public class Gremlin extends AbstractGremlin implements GeoEntity, Enemy, Gremli
     }
 
     @Override
-    public boolean isPerformingAnimatedAction() {
+    public boolean isPerformingSpecialAction() {
         return this.isDuplicating() || this.isHatching() || this.isAttacking();
     }
 
     @Override
-    public boolean canWalkWhilePerformingAnimatedAction() {
-        return this.isDuplicating() || this.isAttacking();
+    public boolean canWalkWhilePerformingSpecialAction() {
+        return this.isAttacking() && !this.isUsingAlternateAttack();
     }
 
     @Override
@@ -289,7 +309,7 @@ public class Gremlin extends AbstractGremlin implements GeoEntity, Enemy, Gremli
 
     @Override
     public void finishConversion(Mob convertedFrom) {
-        this.setHatching(true);
+        //this.setHatching(true);
     }
 
     @Override
@@ -303,16 +323,20 @@ public class Gremlin extends AbstractGremlin implements GeoEntity, Enemy, Gremli
 
     @Override
     public boolean doHurtTarget(Entity entity) {
-        this.attackAnimationTicks = ATTACK_ANIMATION_TIME;
         this.setUsingAlternateAttack(this.random.nextBoolean());
+        this.attackAnimationTicks = this.getMaxAttackAnimationTicks();
         this.level().broadcastEntityEvent(this, EntityEvent.START_ATTACKING);
         return super.doHurtTarget(entity);
+    }
+
+    public int getMaxAttackAnimationTicks() {
+        return this.isUsingAlternateAttack() ? ATTACK_2_ANIMATION_TIME : ATTACK_1_ANIMATION_TIME;
     }
 
     @Override
     public void handleEntityEvent(byte id) {
         if (id == EntityEvent.START_ATTACKING) {
-            this.attackAnimationTicks = ATTACK_ANIMATION_TIME;
+            this.attackAnimationTicks = this.getMaxAttackAnimationTicks();
         }
         super.handleEntityEvent(id);
     }
@@ -372,6 +396,9 @@ public class Gremlin extends AbstractGremlin implements GeoEntity, Enemy, Gremli
     public void customServerAiStep() {
         super.customServerAiStep();
         this.updateWaterPathfinding();
+        if(this.isPerformingSpecialAction() && !this.canWalkWhilePerformingSpecialAction()){
+            this.stopInPlace();
+        }
     }
 
     private void updateWaterPathfinding() {
@@ -388,5 +415,15 @@ public class Gremlin extends AbstractGremlin implements GeoEntity, Enemy, Gremli
     @Override
     public float getWalkTargetValue(BlockPos pos, LevelReader level) {
         return -level.getPathfindingCostFromLightLevels(pos);
+    }
+
+    @Override
+    protected int getMaxDeathAnimationTime() {
+        return DEATH_ANIMATION_TIME;
+    }
+
+    @Override
+    protected int getSwitchIdleCooldownTime() {
+        return (this.isUsingAlternateIdle() ? IDLE2_ANIMATION_TIME : IDLE1_ANIMATION_TIME) * this.random.nextInt(1, 5);
     }
 }
