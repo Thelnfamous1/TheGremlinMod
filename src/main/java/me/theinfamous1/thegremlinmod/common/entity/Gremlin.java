@@ -226,11 +226,8 @@ public class Gremlin extends AbstractGremlin implements GeoEntity, Enemy, Gremli
             state.resetCurrentAnimation();
         }
 
-        if(this.isAnimatingHurt()){
-            //state.setControllerSpeed(2.0F);
-            return state.setAndContinue(HURT);
-        } else if(state.isCurrentAnimation(HURT)){
-            state.resetCurrentAnimation();
+        if(this.isDuplicating()){
+            return state.setAndContinue(DUPLICATE);
         }
 
         /*
@@ -257,8 +254,11 @@ public class Gremlin extends AbstractGremlin implements GeoEntity, Enemy, Gremli
             return state.setAndContinue(CLIMB);
         }
 
-        if(this.isDuplicating()){
-            return state.setAndContinue(DUPLICATE);
+        if(this.isAnimatingHurt()){
+            //state.setControllerSpeed(2.0F);
+            return state.setAndContinue(HURT);
+        } else if(state.isCurrentAnimation(HURT)){
+            state.resetCurrentAnimation();
         }
 
         return PlayState.STOP;
@@ -276,6 +276,9 @@ public class Gremlin extends AbstractGremlin implements GeoEntity, Enemy, Gremli
 
     @Override
     public boolean canWalkWhilePerformingSpecialAction() {
+        if(this.isDuplicating()){
+            return false;
+        }
         return this.isAttacking() && !this.isUsingAlternateAttack();
     }
 
@@ -396,9 +399,20 @@ public class Gremlin extends AbstractGremlin implements GeoEntity, Enemy, Gremli
     public void customServerAiStep() {
         super.customServerAiStep();
         this.updateWaterPathfinding();
-        if(this.isPerformingSpecialAction() && !this.canWalkWhilePerformingSpecialAction()){
-            this.stopInPlace();
+        /*
+        if(this.isPerformingSpecialAction()){
+            if(!this.canWalkWhilePerformingSpecialAction()){
+                this.stopAllMovement();
+            }
+            if(!this.canAttackWhilePerformingSpecialAction()){
+                this.setTarget(null);
+            }
         }
+         */
+    }
+
+    protected boolean canAttackWhilePerformingSpecialAction(){
+        return !this.isDuplicating();
     }
 
     private void updateWaterPathfinding() {

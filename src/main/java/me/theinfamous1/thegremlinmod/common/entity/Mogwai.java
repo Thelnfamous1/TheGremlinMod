@@ -211,6 +211,10 @@ public class Mogwai extends AbstractGremlin implements GeoEntity{
             state.resetCurrentAnimation();
         }
 
+        if(this.isDuplicating()){
+            return state.setAndContinue(DUPLICATE);
+        }
+
         if(this.isAnimatingHurt()){
             //state.setControllerSpeed(2.0F);
             return state.setAndContinue(HURT);
@@ -231,10 +235,6 @@ public class Mogwai extends AbstractGremlin implements GeoEntity{
             state.resetCurrentAnimation();
         }
          */
-
-        if(this.isDuplicating()){
-            return state.setAndContinue(DUPLICATE);
-        }
 
         if(this.isCrying()){
             return state.setAndContinue(CRY);
@@ -416,9 +416,11 @@ public class Mogwai extends AbstractGremlin implements GeoEntity{
     public void customServerAiStep() {
         super.customServerAiStep();
         this.updateCrying();
+        /*
         if(this.isPerformingSpecialAction() && !this.canWalkWhilePerformingSpecialAction()){
-            this.stopInPlace();
+            this.stopAllMovement();
         }
+         */
     }
 
     private void updateCrying() {

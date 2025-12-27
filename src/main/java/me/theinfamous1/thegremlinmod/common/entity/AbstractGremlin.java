@@ -1,6 +1,7 @@
 package me.theinfamous1.thegremlinmod.common.entity;
 
 import me.theinfamous1.thegremlinmod.TheGremlinMod;
+import me.theinfamous1.thegremlinmod.common.entity.ai.GremlinMoveControl;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -34,6 +35,7 @@ public abstract class AbstractGremlin extends PathfinderMob{
         this.setPathfindingMalus(PathType.DAMAGE_FIRE, -1.0F);
         this.setPathfindingMalus(PathType.WATER, -1.0F);
         this.setPathfindingMalus(PathType.WATER_BORDER, -1.0F);
+        this.moveControl = new GremlinMoveControl<>(this);
     }
 
     @Override
@@ -144,6 +146,10 @@ public abstract class AbstractGremlin extends PathfinderMob{
 
     public abstract boolean canWalkWhilePerformingSpecialAction();
 
+    public boolean canMove() {
+        return !this.isPerformingSpecialAction() || this.canWalkWhilePerformingSpecialAction();
+    }
+
     protected void resetDuplicationCooldown() {
         if(TheGremlinMod.isDevelopmentEnvironment()){
             TheGremlinMod.LOGGER.info("Reset duplication cooldown for {}", this);
@@ -196,7 +202,7 @@ public abstract class AbstractGremlin extends PathfinderMob{
             if(TheGremlinMod.isDevelopmentEnvironment()){
                 TheGremlinMod.LOGGER.info("Triggered environmental duplication for {}", this);
             }
-            this.setDuplicating(true);
+            this.triggerDuplication();
         }
         if(this.duplicateAnimationTicks > 0){
             --this.duplicateAnimationTicks;
@@ -210,6 +216,17 @@ public abstract class AbstractGremlin extends PathfinderMob{
                 this.duplicate();
             }
         }
+    }
+
+    protected void triggerDuplication() {
+        this.setDuplicating(true);
+        this.stopAllMovement();
+        this.setTarget(null);
+    }
+
+    protected void stopAllMovement() {
+        this.stopInPlace();
+        this.jumping = false;
     }
 
     protected void duplicate() {
@@ -250,16 +267,21 @@ public abstract class AbstractGremlin extends PathfinderMob{
 
     @Override
     public boolean hurt(DamageSource source, float amount) {
+        boolean hitByWater = false;
         if(source.getDirectEntity() instanceof ThrownPotion thrownPotion && AbstractGremlin.isWaterPotion(thrownPotion)){
+            hitByWater = true;
             if(!this.level().isClientSide() && this.canDuplicate()){
                 if(TheGremlinMod.isDevelopmentEnvironment()){
                     TheGremlinMod.LOGGER.info("Triggered impact duplication for {}", this);
                 }
-                this.setDuplicating(true);
+                this.triggerDuplication();
             }
-            return false;
         }
-        return super.hurt(source, amount);
+        boolean hurt = false;
+        if(!hitByWater){
+            hurt = super.hurt(source, amount);
+        }
+        return hurt;
     }
 
     public static boolean isWaterPotion(ThrownPotion potion){
@@ -323,5 +345,14 @@ public abstract class AbstractGremlin extends PathfinderMob{
 
     public float getSwimmingSlowdown(){
         return 0.98F;
+    }
+
+    @Override
+    public void tick() {
+        super.tick();
+
+        if (!this.canMove()) {
+            this.clampHeadRotationToBody();
+        }
     }
 }
