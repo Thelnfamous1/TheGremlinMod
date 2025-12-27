@@ -20,10 +20,10 @@ public class AbstractFurnaceBlockEntityMixin {
     @Shadow @Final protected static int SLOT_FUEL;
 
     @WrapOperation(method = "serverTick", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/block/entity/AbstractFurnaceBlockEntity;canBurn(Lnet/minecraft/core/RegistryAccess;Lnet/minecraft/world/item/crafting/RecipeHolder;Lnet/minecraft/core/NonNullList;ILnet/minecraft/world/level/block/entity/AbstractFurnaceBlockEntity;)Z", ordinal = 0))
-    private static boolean wrap_canBurn_serverTick(RegistryAccess itemstack1, RecipeHolder<?> recipeHolder, NonNullList<ItemStack> inventory, int maxStackSize, AbstractFurnaceBlockEntity furnaceBlockEntity, Operation<Boolean> original){
-        if(recipeHolder.id().equals(TheGremlinMod.SUN_DROP_RECIPE_LOCATION)){
+    private static boolean wrap_canBurn_serverTick(RegistryAccess registryAccess, RecipeHolder<?> recipeHolder, NonNullList<ItemStack> inventory, int maxStackSize, AbstractFurnaceBlockEntity furnaceBlockEntity, Operation<Boolean> original){
+        if(recipeHolder != null && recipeHolder.id().equals(TheGremlinMod.SUN_DROP_RECIPE_LOCATION)){
             return inventory.get(SLOT_FUEL).is(Items.LAVA_BUCKET);
         }
-        return original.call(itemstack1, recipeHolder, inventory, maxStackSize, furnaceBlockEntity);
+        return original.call(registryAccess, recipeHolder, inventory, maxStackSize, furnaceBlockEntity);
     }
 }
