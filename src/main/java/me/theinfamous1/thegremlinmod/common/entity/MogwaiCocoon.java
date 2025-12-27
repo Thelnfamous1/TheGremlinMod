@@ -114,8 +114,12 @@ public class MogwaiCocoon extends Mob implements GeoEntity, GremlinConvert {
     public void readAdditionalSaveData(CompoundTag compound) {
         super.readAdditionalSaveData(compound);
 
-        compound.putInt("age", this.tickCount);
-        compound.putBoolean("hatched", this.hatched());
+        if(compound.contains("age")){
+            this.tickCount = compound.getInt("age");
+        }
+        if(compound.contains("hatched")){
+            this.setHatched(compound.getBoolean("hatched"));
+        }
     }
 
     private boolean hatched() {
@@ -127,12 +131,8 @@ public class MogwaiCocoon extends Mob implements GeoEntity, GremlinConvert {
     public void addAdditionalSaveData(CompoundTag compound) {
         super.addAdditionalSaveData(compound);
 
-        if(compound.contains("age")){
-            this.tickCount = compound.getInt("age");
-        }
-        if(compound.contains("hatched")){
-            this.setHatched(compound.getBoolean("hatched"));
-        }
+        compound.putInt("age", this.tickCount);
+        compound.putBoolean("hatched", this.hatched());
     }
 
     private void setHatched(boolean hatched) {
