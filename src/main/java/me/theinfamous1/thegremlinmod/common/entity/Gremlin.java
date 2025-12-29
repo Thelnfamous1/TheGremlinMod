@@ -36,6 +36,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.pathfinder.PathType;
+import org.jetbrains.annotations.Nullable;
 import software.bernie.geckolib.animatable.GeoEntity;
 import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
 import software.bernie.geckolib.animation.*;
@@ -69,6 +70,7 @@ public class Gremlin extends AbstractGremlin implements GeoEntity, Enemy, Gremli
     private int attackAnimationTicks;
 
     private static final EntityDataAccessor<Boolean> DATA_USE_ALTERNATE_ATTACK = SynchedEntityData.defineId(Gremlin.class, EntityDataSerializers.BOOLEAN);
+    private int soundTick;
 
     public Gremlin(EntityType<? extends Gremlin> entityType, Level level) {
         super(entityType, level);
@@ -299,6 +301,16 @@ public class Gremlin extends AbstractGremlin implements GeoEntity, Enemy, Gremli
         if (!this.level().isClientSide()) {
             this.setClimbing(this.onClimbableLadder() || this.horizontalCollision);
         }
+        this.soundTick = this.soundTick == 0 ? this.random.nextIntBetweenInclusive(1, 80) : this.soundTick - 1;
+        if (this.soundTick == 0 && this.isAggressive()) {
+            this.playLaughSound();
+        }
+    }
+
+    protected void playLaughSound() {
+        float pitch = 0.7F + 0.4F * this.random.nextFloat();
+        float volume = 0.8F + 0.2F * this.random.nextFloat();
+        this.level().playLocalSound(this, TheGremlinMod.GREMLIN_LAUGH.get(), this.getSoundSource(), volume, pitch);
     }
 
     @Override
@@ -381,16 +393,6 @@ public class Gremlin extends AbstractGremlin implements GeoEntity, Enemy, Gremli
     }
 
     @Override
-    protected SoundEvent getHurtSound(DamageSource damageSource) {
-        return SoundEvents.HOSTILE_HURT;
-    }
-
-    @Override
-    protected SoundEvent getDeathSound() {
-        return SoundEvents.HOSTILE_DEATH;
-    }
-
-    @Override
     public LivingEntity.Fallsounds getFallSounds() {
         return new LivingEntity.Fallsounds(SoundEvents.HOSTILE_SMALL_FALL, SoundEvents.HOSTILE_BIG_FALL);
     }
@@ -439,5 +441,32 @@ public class Gremlin extends AbstractGremlin implements GeoEntity, Enemy, Gremli
     @Override
     protected int getSwitchIdleCooldownTime() {
         return (this.isUsingAlternateIdle() ? IDLE2_ANIMATION_TIME : IDLE1_ANIMATION_TIME) * this.random.nextInt(1, 5);
+    }
+    @Nullable
+    @Override
+    protected SoundEvent getHurtSound(DamageSource damageSource) {
+        return TheGremlinMod.GREMLIN_HURT.get();
+    }
+
+    @Nullable
+    @Override
+    protected SoundEvent getDeathSound() {
+        return TheGremlinMod.GREMLIN_DIE.get();
+    }
+
+    @Nullable
+    @Override
+    protected SoundEvent getAmbientSound() {
+        return this.isPerformingSpecialAction() ? null : TheGremlinMod.GREMLIN_IDLE.get();
+    }
+
+    @Override
+    protected void playDuplicateSound() {
+        this.playSound(TheGremlinMod.GREMLIN_DUPLICATE.get());
+    }
+
+    @Override
+    protected void playAttackSound() {
+        this.playSound(TheGremlinMod.GREMLIN_ATTACK.get());
     }
 }

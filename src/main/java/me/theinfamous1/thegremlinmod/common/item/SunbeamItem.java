@@ -2,6 +2,7 @@ package me.theinfamous1.thegremlinmod.common.item;
 
 import me.theinfamous1.thegremlinmod.Config;
 import me.theinfamous1.thegremlinmod.TheGremlinMod;
+import me.theinfamous1.thegremlinmod.client.ClientSoundHandler;
 import me.theinfamous1.thegremlinmod.client.SunbeamItemRenderer;
 import me.theinfamous1.thegremlinmod.common.util.TGMTags;
 import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
@@ -16,6 +17,7 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.ProjectileUtil;
 import net.minecraft.world.item.Item;
@@ -30,10 +32,14 @@ import software.bernie.geckolib.animation.AnimatableManager;
 import software.bernie.geckolib.renderer.GeoItemRenderer;
 import software.bernie.geckolib.util.GeckoLibUtil;
 
+import java.util.HashSet;
+import java.util.Set;
+import java.util.UUID;
 import java.util.function.Consumer;
 
 public class SunbeamItem extends Item implements GeoItem {
     private final AnimatableInstanceCache animatableInstanceCache = GeckoLibUtil.createInstanceCache(this);
+    private static final Set<UUID> USE_SOUND_PLAYED = new HashSet<>();
 
     public SunbeamItem(Properties properties) {
         super(properties);
@@ -63,6 +69,7 @@ public class SunbeamItem extends Item implements GeoItem {
         setSwitchValue(itemstack, !switchValue);
         if(getSwitchValue(itemstack) && getTimer(itemstack) <= 0){
             setTimer(itemstack, getMaxSunbeamUseTimeTicks());
+            USE_SOUND_PLAYED.remove(player.getUUID());
         }
         player.awardStat(Stats.ITEM_USED.get(this));
         return InteractionResultHolder.consume(itemstack);
@@ -87,6 +94,10 @@ public class SunbeamItem extends Item implements GeoItem {
     @Override
     public void inventoryTick(ItemStack stack, Level level, Entity user, int slotId, boolean isSelected) {
         if(getSwitchValue(stack) && getTimer(stack) > 0){
+            if(level.isClientSide && user instanceof LivingEntity livingUser && !USE_SOUND_PLAYED.contains(user.getUUID())){
+                ClientSoundHandler.playSunbeamSound(livingUser);
+                USE_SOUND_PLAYED.add(user.getUUID());
+            }
             if(!level.isClientSide){
                 switch (Config.SUNBEAM_DETECTION_MODE.get()){
                     case PINPOINT -> {
@@ -121,6 +132,7 @@ public class SunbeamItem extends Item implements GeoItem {
             if(getTimer(stack) <= 0){
                 playSwitchSound(level, user);
                 setSwitchValue(stack, false);
+                USE_SOUND_PLAYED.remove(user.getUUID());
                 if(user instanceof Player player){
                     player.getCooldowns().addCooldown(stack.getItem(), getSunbeamUseCooldownTimeTicks());
                 }

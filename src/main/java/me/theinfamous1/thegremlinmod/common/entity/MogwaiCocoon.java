@@ -12,6 +12,7 @@ import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerEntity;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.util.Mth;
@@ -24,6 +25,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 import net.neoforged.neoforge.event.EventHooks;
+import org.jetbrains.annotations.Nullable;
 import software.bernie.geckolib.animatable.GeoEntity;
 import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
 import software.bernie.geckolib.animation.*;
@@ -147,7 +149,12 @@ public class MogwaiCocoon extends Mob implements GeoEntity, GremlinConvert {
 
         if(!this.level().isClientSide() && this.tickCount > Config.COCOON_HATCH_TIME.get() && !this.isHatching() && !this.hatched()){
             this.setHatching(true);
+            this.playHatchSound();
         }
+    }
+
+    protected void playHatchSound() {
+        this.playSound(TheGremlinMod.COCOON_HATCHING.get());
     }
 
     private void updateHatching() {
@@ -244,6 +251,11 @@ public class MogwaiCocoon extends Mob implements GeoEntity, GremlinConvert {
     @Override
     public void finishConversion(Mob convertedFrom) {
         this.setSpawning(true);
+        this.playGrowSound();
+    }
+
+    protected void playGrowSound() {
+        this.playSound(TheGremlinMod.COCOON_GROWING.get());
     }
 
     @Override
@@ -259,5 +271,15 @@ public class MogwaiCocoon extends Mob implements GeoEntity, GremlinConvert {
     @Override
     public SoundSource getSoundSource() {
         return SoundSource.HOSTILE;
+    }
+
+    @Nullable
+    @Override
+    protected SoundEvent getAmbientSound() {
+        return this.isPerformingSpecialAction() ? null : TheGremlinMod.COCOON_IDLE.get();
+    }
+
+    protected boolean isPerformingSpecialAction() {
+        return this.isHatching() || this.isSpawning();
     }
 }

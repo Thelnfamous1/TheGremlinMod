@@ -222,7 +222,10 @@ public abstract class AbstractGremlin extends PathfinderMob{
         this.setDuplicating(true);
         this.stopAllMovement();
         this.setTarget(null);
+        this.playDuplicateSound();
     }
+
+    protected abstract void playDuplicateSound();
 
     protected void stopAllMovement() {
         this.stopInPlace();

@@ -10,6 +10,7 @@ import net.minecraft.advancements.critereon.ItemSubPredicate;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.entity.SpawnPlacementTypes;
@@ -88,6 +89,29 @@ public class TheGremlinMod {
     public static final DeferredItem<Item> MOGWAI_COCOON_SPAWN_EGG = ITEMS.registerItem("mogwai_cocoon_spawn_egg", p -> new DeferredSpawnEggItem(MOGWAI_COCOON, 0x263e00, 0x406802, p));
     public static final DeferredItem<Item> GREMLIN_SPAWN_EGG = ITEMS.registerItem("gremlin_spawn_egg", p -> new DeferredSpawnEggItem(GREMLIN, 0x1f3200, 0xe52e07, p));
 
+    public static final DeferredRegister<SoundEvent> SOUND_EVENTS = DeferredRegister.create(Registries.SOUND_EVENT, MODID);
+
+    public static final DeferredHolder<SoundEvent, SoundEvent> COCOON_GROWING = registerSoundEvent("entity.cocoon.growing");
+    public static final DeferredHolder<SoundEvent, SoundEvent> COCOON_HATCHING = registerSoundEvent("entity.cocoon.hatching");
+    public static final DeferredHolder<SoundEvent, SoundEvent> COCOON_IDLE = registerSoundEvent("entity.cocoon.idle");
+    public static final DeferredHolder<SoundEvent, SoundEvent> GREMLIN_ATTACK = registerSoundEvent("entity.gremlin.attack");
+    public static final DeferredHolder<SoundEvent, SoundEvent> GREMLIN_DIE = registerSoundEvent("entity.gremlin.die");
+    public static final DeferredHolder<SoundEvent, SoundEvent> GREMLIN_DUPLICATE = registerSoundEvent("entity.gremlin.duplicate");
+    public static final DeferredHolder<SoundEvent, SoundEvent> GREMLIN_HURT = registerSoundEvent("entity.gremlin.hurt");
+    public static final DeferredHolder<SoundEvent, SoundEvent> GREMLIN_IDLE = registerSoundEvent("entity.gremlin.idle");
+    public static final DeferredHolder<SoundEvent, SoundEvent> GREMLIN_LAUGH = registerSoundEvent("entity.gremlin.laugh");
+    public static final DeferredHolder<SoundEvent, SoundEvent> MOGWAI_CRY = registerSoundEvent("entity.mogwai.cry");
+    public static final DeferredHolder<SoundEvent, SoundEvent> MOGWAI_DIE = registerSoundEvent("entity.mogwai.die");
+    public static final DeferredHolder<SoundEvent, SoundEvent> MOGWAI_DUPLICATE = registerSoundEvent("entity.mogwai.duplicate");
+    public static final DeferredHolder<SoundEvent, SoundEvent> MOGWAI_HURT = registerSoundEvent("entity.mogwai.hurt");
+    public static final DeferredHolder<SoundEvent, SoundEvent> MOGWAI_IDLE = registerSoundEvent("entity.mogwai.idle");
+    public static final DeferredHolder<SoundEvent, SoundEvent> MOGWAI_SLEEP = registerSoundEvent("entity.mogwai.sleep");
+    public static final DeferredHolder<SoundEvent, SoundEvent> SUNBEAM_IDLE = registerSoundEvent("item.sunbeam.idle");
+
+    private static DeferredHolder<SoundEvent, SoundEvent> registerSoundEvent(String path) {
+        return SOUND_EVENTS.register(path, () -> SoundEvent.createVariableRangeEvent(location(path)));
+    }
+
 
     // Creates a creative tab with the id "thegremlinmod:example_tab" for the example item, that is placed after the combat tab
     public static final DeferredHolder<CreativeModeTab, CreativeModeTab> MOD_TAB = CREATIVE_MODE_TABS.register("tab", () -> CreativeModeTab.builder()
@@ -117,6 +141,7 @@ public class TheGremlinMod {
         DATA_COMPONENTS.register(modEventBus);
         ITEM_SUB_PREDICATES.register(modEventBus);
         ENTITY_TYPES.register(modEventBus);
+        SOUND_EVENTS.register(modEventBus);
 
         // Register ourselves for server and other game events we are interested in.
         // Note that this is necessary if and only if we want *this* class (TheGremlinMod) to respond directly to events.

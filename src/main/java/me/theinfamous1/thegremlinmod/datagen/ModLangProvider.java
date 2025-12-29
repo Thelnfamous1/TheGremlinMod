@@ -3,6 +3,7 @@ package me.theinfamous1.thegremlinmod.datagen;
 import com.electronwill.nightconfig.core.UnmodifiableConfig;
 import me.theinfamous1.thegremlinmod.Config;
 import me.theinfamous1.thegremlinmod.TheGremlinMod;
+import net.minecraft.Util;
 import net.minecraft.data.PackOutput;
 import net.neoforged.neoforge.common.data.LanguageProvider;
 
@@ -30,6 +31,27 @@ public class ModLangProvider extends LanguageProvider {
             String translationKey = TheGremlinMod.MODID + ".configuration." + key;
             this.add(translationKey, capitalizeAndSpace(key));
         }
+        this.add(Util.makeDescriptionId("subtitles", TheGremlinMod.COCOON_GROWING.getId()), "Cocoon grows");
+        this.add(Util.makeDescriptionId("subtitles", TheGremlinMod.COCOON_HATCHING.getId()), "Cocoon hatches");
+        this.add(Util.makeDescriptionId("subtitles", TheGremlinMod.COCOON_IDLE.getId()), "Cocoon pulsates");
+
+
+        this.add(Util.makeDescriptionId("subtitles", TheGremlinMod.GREMLIN_ATTACK.getId()), "Gremlin attacks");
+        this.add(Util.makeDescriptionId("subtitles", TheGremlinMod.GREMLIN_DIE.getId()), "Gremlin dies");
+        this.add(Util.makeDescriptionId("subtitles", TheGremlinMod.GREMLIN_DUPLICATE.getId()), "Gremlin duplicates");
+        this.add(Util.makeDescriptionId("subtitles", TheGremlinMod.GREMLIN_HURT.getId()), "Gremlin hurts");
+        this.add(Util.makeDescriptionId("subtitles", TheGremlinMod.GREMLIN_IDLE.getId()), "Gremlin growls");
+        this.add(Util.makeDescriptionId("subtitles", TheGremlinMod.GREMLIN_LAUGH.getId()), "Gremlin laughs");
+
+        this.add(Util.makeDescriptionId("subtitles", TheGremlinMod.MOGWAI_CRY.getId()), "Mogwai cries");
+        this.add(Util.makeDescriptionId("subtitles", TheGremlinMod.MOGWAI_DIE.getId()), "Mogwai dies");
+        this.add(Util.makeDescriptionId("subtitles", TheGremlinMod.MOGWAI_DUPLICATE.getId()), "Mogwai duplicates");
+        this.add(Util.makeDescriptionId("subtitles", TheGremlinMod.MOGWAI_HURT.getId()), "Mogwai hurts");
+        this.add(Util.makeDescriptionId("subtitles", TheGremlinMod.MOGWAI_IDLE.getId()), "Mogwai squeaks");
+        this.add(Util.makeDescriptionId("subtitles", TheGremlinMod.MOGWAI_SLEEP.getId()), "Mogwai sleeps");
+
+
+        this.add(Util.makeDescriptionId("subtitles", TheGremlinMod.SUNBEAM_IDLE.getId()), "Sunbeam hums");
     }
 
     public static String capitalizeAndSpace(String input) {

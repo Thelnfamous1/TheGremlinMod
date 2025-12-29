@@ -1,0 +1,103 @@
+{
+  "entity.cocoon.growing": {
+    "sounds": [
+      "thegremlinmod:cocoon_growing"
+    ],
+    "subtitle": "subtitles.thegremlinmod.entity.cocoon.growing"
+  },
+  "entity.cocoon.hatching": {
+    "sounds": [
+      "thegremlinmod:cocoon_hatching"
+    ],
+    "subtitle": "subtitles.thegremlinmod.entity.cocoon.hatching"
+  },
+  "entity.cocoon.idle": {
+    "sounds": [
+      "thegremlinmod:cocoon_idle"
+    ],
+    "subtitle": "subtitles.thegremlinmod.entity.cocoon.idle"
+  },
+  "entity.gremlin.attack": {
+    "sounds": [
+      "thegremlinmod:gremlin_attack_1",
+      "thegremlinmod:gremlin_attack_2"
+    ],
+    "subtitle": "subtitles.thegremlinmod.entity.gremlin.attack"
+  },
+  "entity.gremlin.die": {
+    "sounds": [
+      "thegremlinmod:gremlin_die"
+    ],
+    "subtitle": "subtitles.thegremlinmod.entity.gremlin.die"
+  },
+  "entity.gremlin.duplicate": {
+    "sounds": [
+      "thegremlinmod:gremlin_duplicate"
+    ],
+    "subtitle": "subtitles.thegremlinmod.entity.gremlin.duplicate"
+  },
+  "entity.gremlin.hurt": {
+    "sounds": [
+      "thegremlinmod:gremlin_hurt"
+    ],
+    "subtitle": "subtitles.thegremlinmod.entity.gremlin.hurt"
+  },
+  "entity.gremlin.idle": {
+    "sounds": [
+      "thegremlinmod:gremlin_idle_1",
+      "thegremlinmod:gremlin_idle_2",
+      "thegremlinmod:gremlin_idle_3"
+    ],
+    "subtitle": "subtitles.thegremlinmod.entity.gremlin.idle"
+  },
+  "entity.gremlin.laugh": {
+    "sounds": [
+      "thegremlinmod:gremlin_laugh_1",
+      "thegremlinmod:gremlin_laugh_2"
+    ],
+    "subtitle": "subtitles.thegremlinmod.entity.gremlin.laugh"
+  },
+  "entity.mogwai.cry": {
+    "sounds": [
+      "thegremlinmod:mogwai_cry"
+    ],
+    "subtitle": "subtitles.thegremlinmod.entity.mogwai.cry"
+  },
+  "entity.mogwai.die": {
+    "sounds": [
+      "thegremlinmod:mogwai_die"
+    ],
+    "subtitle": "subtitles.thegremlinmod.entity.mogwai.die"
+  },
+  "entity.mogwai.duplicate": {
+    "sounds": [
+      "thegremlinmod:mogwai_duplicate"
+    ],
+    "subtitle": "subtitles.thegremlinmod.entity.mogwai.duplicate"
+  },
+  "entity.mogwai.hurt": {
+    "sounds": [
+      "thegremlinmod:mogwai_hurt"
+    ],
+    "subtitle": "subtitles.thegremlinmod.entity.mogwai.hurt"
+  },
+  "entity.mogwai.idle": {
+    "sounds": [
+      "thegremlinmod:mogwai_idle_1",
+      "thegremlinmod:mogwai_idle_2"
+    ],
+    "subtitle": "subtitles.thegremlinmod.entity.mogwai.idle"
+  },
+  "entity.mogwai.sleep": {
+    "sounds": [
+      "thegremlinmod:mogwai_sleep"
+    ],
+    "subtitle": "subtitles.thegremlinmod.entity.mogwai.sleep"
+  },
+  "item.sunbeam.idle": {
+    "sounds": [
+      "thegremlinmod:sunbeam_idle"
+    ],
+    "subtitle": "subtitles.thegremlinmod.item.sunbeam.idle"
+  }
+}

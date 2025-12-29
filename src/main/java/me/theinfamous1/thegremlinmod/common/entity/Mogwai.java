@@ -2,6 +2,7 @@ package me.theinfamous1.thegremlinmod.common.entity;
 
 import me.theinfamous1.thegremlinmod.Config;
 import me.theinfamous1.thegremlinmod.TheGremlinMod;
+import me.theinfamous1.thegremlinmod.client.ClientSoundHandler;
 import me.theinfamous1.thegremlinmod.common.entity.ai.*;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponents;
@@ -9,10 +10,12 @@ import net.minecraft.core.particles.ItemParticleOption;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.sounds.SoundEvent;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.entity.PathfinderMob;
@@ -28,6 +31,7 @@ import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.event.EventHooks;
+import org.jetbrains.annotations.Nullable;
 import software.bernie.geckolib.animatable.GeoEntity;
 import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
 import software.bernie.geckolib.animation.*;
@@ -60,6 +64,8 @@ public class Mogwai extends AbstractGremlin implements GeoEntity{
     protected int eatAnimationTicks;
     protected int cocooningAnimationTicks;
     private boolean fedPastBedtime;
+    protected boolean wasCrying;
+    protected boolean wasLying;
 
     public Mogwai(EntityType<? extends Mogwai> entityType, Level level) {
         super(entityType, level);
@@ -134,6 +140,16 @@ public class Mogwai extends AbstractGremlin implements GeoEntity{
                 this.cocooningAnimationTicks = 0;
             }
             */
+            if(this.isCrying()){
+                if(!this.wasCrying && this.level().isClientSide){
+                    ClientSoundHandler.playMogwaiCryingSound(this);
+                }
+            }
+            if(this.isLying()){
+                if(!this.wasLying && this.level().isClientSide){
+                    ClientSoundHandler.playMogwaiSleepingSound(this);
+                }
+            }
         }
     }
 
@@ -251,6 +267,10 @@ public class Mogwai extends AbstractGremlin implements GeoEntity{
         return !this.isDuplicating() && !this.isCrying() && !this.isEating() && !this.isCocooning();
     }
 
+    public boolean canPerformCry() {
+        return !this.isDuplicating() && !this.isEating() && !this.isCocooning();
+    }
+
     @Override
     public AnimatableInstanceCache getAnimatableInstanceCache() {
         return this.animatableInstanceCache;
@@ -270,6 +290,9 @@ public class Mogwai extends AbstractGremlin implements GeoEntity{
 
         // cocooning
         //this.updateCocooning();
+
+        this.wasCrying = this.isCrying();
+        this.wasLying = this.isLying();
     }
 
     private void updateCocooning() {
@@ -430,7 +453,7 @@ public class Mogwai extends AbstractGremlin implements GeoEntity{
             }
             this.setFedPastBedtime(false);
         }
-        this.setCrying(this.isDoNotFeedTime() && !this.fedPastBedtime());
+        this.setCrying(this.canPerformCry() && this.isDoNotFeedTime() && !this.fedPastBedtime());
     }
 
     private boolean fedPastBedtime() {
@@ -468,5 +491,28 @@ public class Mogwai extends AbstractGremlin implements GeoEntity{
     @Override
     protected int getSwitchIdleCooldownTime() {
         return (this.isUsingAlternateIdle() ? IDLE2_ANIMATION_TIME : IDLE1_ANIMATION_TIME) * this.random.nextInt(1, 5);
+    }
+
+    @Nullable
+    @Override
+    protected SoundEvent getHurtSound(DamageSource damageSource) {
+        return TheGremlinMod.MOGWAI_HURT.get();
+    }
+
+    @Nullable
+    @Override
+    protected SoundEvent getDeathSound() {
+        return TheGremlinMod.MOGWAI_DIE.get();
+    }
+
+    @Nullable
+    @Override
+    protected SoundEvent getAmbientSound() {
+        return this.isPerformingSpecialAction() ? null : TheGremlinMod.MOGWAI_IDLE.get();
+    }
+
+    @Override
+    protected void playDuplicateSound() {
+        this.playSound(TheGremlinMod.MOGWAI_DUPLICATE.get());
     }
 }

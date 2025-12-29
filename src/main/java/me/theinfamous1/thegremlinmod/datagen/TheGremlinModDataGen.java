@@ -35,6 +35,7 @@ public class TheGremlinModDataGen {
         event.addProvider(new ModRecipeProvider(packOutput, lookupProvider));
         event.addProvider(new ModLootProvider(packOutput, lookupProvider));
         event.addProvider(new ModBiomeTagProvider(packOutput, lookupProvider, existingFileHelper));
+        event.addProvider(new ModSoundsProvider(packOutput, existingFileHelper));
         RegistrySetBuilder builder = createRegistrySetBuilder();
         event.createDatapackRegistryObjects(builder);
     }
