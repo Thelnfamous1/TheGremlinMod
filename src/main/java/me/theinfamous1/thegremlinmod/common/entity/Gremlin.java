@@ -301,10 +301,13 @@ public class Gremlin extends AbstractGremlin implements GeoEntity, Enemy, Gremli
         if (!this.level().isClientSide()) {
             this.setClimbing(this.onClimbableLadder() || this.horizontalCollision);
         }
+
+        /*
         this.soundTick = this.soundTick == 0 ? this.random.nextIntBetweenInclusive(1, 80) : this.soundTick - 1;
         if (this.soundTick == 0 && this.isAggressive()) {
             this.playLaughSound();
         }
+         */
     }
 
     protected void playLaughSound() {
@@ -457,7 +460,7 @@ public class Gremlin extends AbstractGremlin implements GeoEntity, Enemy, Gremli
     @Nullable
     @Override
     protected SoundEvent getAmbientSound() {
-        return this.isPerformingSpecialAction() ? null : TheGremlinMod.GREMLIN_IDLE.get();
+        return this.isPerformingSpecialAction() ? null : this.isAggressive() ? TheGremlinMod.GREMLIN_LAUGH.get() : TheGremlinMod.GREMLIN_IDLE.get();
     }
 
     @Override
