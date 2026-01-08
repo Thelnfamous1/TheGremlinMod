@@ -29,9 +29,6 @@ public class ModLangProvider extends LanguageProvider {
         for(UnmodifiableConfig.Entry entry : TheGremlinModConfig.SPEC.getValues().entrySet()){
             translateConfigKey(entry);
         }
-        for(UnmodifiableConfig.Entry entry : TheGremlinModConfig.SPEC.getValues().entrySet()){
-            //translateConfigKey(entry);
-        }
         this.add(Util.makeDescriptionId("subtitles", TheGremlinMod.COCOON_GROWING.getId()), "Cocoon grows");
         this.add(Util.makeDescriptionId("subtitles", TheGremlinMod.COCOON_HATCHING.getId()), "Cocoon hatches");
         this.add(Util.makeDescriptionId("subtitles", TheGremlinMod.COCOON_IDLE.getId()), "Cocoon pulsates");
