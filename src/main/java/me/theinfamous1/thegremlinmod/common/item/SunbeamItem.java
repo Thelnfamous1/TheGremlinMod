@@ -1,6 +1,6 @@
 package me.theinfamous1.thegremlinmod.common.item;
 
-import me.theinfamous1.thegremlinmod.Config;
+import me.theinfamous1.thegremlinmod.TheGremlinModConfig;
 import me.theinfamous1.thegremlinmod.TheGremlinMod;
 import me.theinfamous1.thegremlinmod.client.ClientSoundHandler;
 import me.theinfamous1.thegremlinmod.client.SunbeamItemRenderer;
@@ -99,7 +99,7 @@ public class SunbeamItem extends Item implements GeoItem {
                 USE_SOUND_PLAYED.add(user.getUUID());
             }
             if(!level.isClientSide){
-                switch (Config.SUNBEAM_DETECTION_MODE.get()){
+                switch (TheGremlinModConfig.SUNBEAM_DETECTION_MODE.get()){
                     case PINPOINT -> {
                         HitResult pick = pick(user, 0);
                         if (pick instanceof EntityHitResult entityHitResult) {
@@ -108,8 +108,8 @@ public class SunbeamItem extends Item implements GeoItem {
                         }
                     }
                     case FOCUSED -> {
-                        double maxDistance = Config.SUNBEAM_RANGE.get();
-                        double focusAngle = Mth.clamp(Config.SUNBEAM_FOCUS_ANGLE.get(), 0, 360);
+                        double maxDistance = TheGremlinModConfig.SUNBEAM_RANGE.get();
+                        double focusAngle = Mth.clamp(TheGremlinModConfig.SUNBEAM_FOCUS_ANGLE.get(), 0, 360);
                         for (Entity hitEntity : level.getEntities(user, user.getBoundingBox().inflate(maxDistance), e -> !e.isSpectator() && e.isPickable())) {
                             if (isWithinCoverage(user, hitEntity, maxDistance, focusAngle)) {
                                 applySunbeamDamage(level, user, hitEntity);
@@ -118,7 +118,7 @@ public class SunbeamItem extends Item implements GeoItem {
                     }
                     default -> {
                         Vec3 eyePos = user.getEyePosition(0);
-                        double maxDistance = Config.SUNBEAM_RANGE.get();
+                        double maxDistance = TheGremlinModConfig.SUNBEAM_RANGE.get();
                         for (Entity hitEntity : level.getEntities(user, user.getBoundingBox().inflate(maxDistance), e -> !e.isSpectator() && e.isPickable())) {
                             if (isWithinCoverage(user, hitEntity, eyePos, maxDistance)) {
                                 applySunbeamDamage(level, user, hitEntity);
@@ -194,13 +194,13 @@ public class SunbeamItem extends Item implements GeoItem {
         if(hitEntity.getType().is(TGMTags.VULNERABLE_TO_SUNBEAM)){
             DamageSource sunbeamDamageSource = level.damageSources().magic();
             if(entity.invulnerableTime <= 0 || sunbeamDamageSource.is(DamageTypeTags.BYPASSES_COOLDOWN)){
-                hitEntity.hurt(sunbeamDamageSource, Config.SUNBEAM_DAMAGE.get());
+                hitEntity.hurt(sunbeamDamageSource, TheGremlinModConfig.SUNBEAM_DAMAGE.get());
             }
         }
     }
 
     private static HitResult pick(Entity entity, float partialTick) {
-        double interactionRange = Config.SUNBEAM_RANGE.get();
+        double interactionRange = TheGremlinModConfig.SUNBEAM_RANGE.get();
         double interactionRangeSqr = Mth.square(interactionRange);
         Vec3 eyePosition = entity.getEyePosition(partialTick);
         HitResult blockPickResult = entity.pick(interactionRange, partialTick, false);
@@ -253,11 +253,11 @@ public class SunbeamItem extends Item implements GeoItem {
     }
 
     private static Integer getMaxSunbeamUseTimeTicks() {
-        return Config.MAX_SUNBEAM_USE_TIME.get() * 20;
+        return TheGremlinModConfig.MAX_SUNBEAM_USE_TIME.get() * 20;
     }
 
     private static Integer getSunbeamUseCooldownTimeTicks() {
-        return Config.SUNBEAM_USE_COOLDOWN_TIME.get() * 20;
+        return TheGremlinModConfig.SUNBEAM_USE_COOLDOWN_TIME.get() * 20;
     }
 
     @Override

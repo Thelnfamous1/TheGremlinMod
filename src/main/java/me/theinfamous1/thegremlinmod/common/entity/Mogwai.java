@@ -1,6 +1,6 @@
 package me.theinfamous1.thegremlinmod.common.entity;
 
-import me.theinfamous1.thegremlinmod.Config;
+import me.theinfamous1.thegremlinmod.TheGremlinModConfig;
 import me.theinfamous1.thegremlinmod.TheGremlinMod;
 import me.theinfamous1.thegremlinmod.client.ClientSoundHandler;
 import me.theinfamous1.thegremlinmod.common.entity.ai.*;
@@ -121,7 +121,7 @@ public class Mogwai extends AbstractGremlin implements GeoEntity{
 
     @Override
     protected long getDefaultDuplicationCooldownTime() {
-        return Config.MOGWAI_DUPLICATION_COOLDOWN.get();
+        return TheGremlinModConfig.MOGWAI_DUPLICATION_COOLDOWN.get();
     }
 
     @Override

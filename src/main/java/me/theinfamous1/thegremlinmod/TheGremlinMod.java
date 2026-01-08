@@ -17,8 +17,7 @@ import net.minecraft.world.entity.SpawnPlacementTypes;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.neoforged.fml.loading.FMLEnvironment;
 import net.neoforged.neoforge.common.DeferredSpawnEggItem;
-import net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent;
-import net.neoforged.neoforge.event.entity.RegisterSpawnPlacementsEvent;
+import net.neoforged.neoforge.event.entity.*;
 import org.slf4j.Logger;
 
 import com.mojang.logging.LogUtils;
@@ -149,11 +148,26 @@ public class TheGremlinMod {
         NeoForge.EVENT_BUS.register(this);
 
         // Register our mod's ModConfigSpec so that FML can create and load the config file for us
-        modContainer.registerConfig(ModConfig.Type.COMMON, Config.SPEC);
+        modContainer.registerConfig(ModConfig.Type.COMMON, TheGremlinModConfig.SPEC);
     }
 
     public static ResourceLocation location(String path){
         return ResourceLocation.fromNamespaceAndPath(MODID, path);
+    }
+
+    public static ResourceLocation parseLocation(String id) {
+        String namespace = "minecraft"; // default namespace
+        String path = id;
+
+        // If the id contains a ":", split it into namespace and path
+        if (id.contains(":")) {
+            String[] parts = id.split(":", 2);
+            namespace = parts[0];
+            path = parts[1];
+        }
+
+        // Use tryParse method to create an Identifier
+        return ResourceLocation.tryParse(namespace + ":" + path);
     }
 
     public static boolean isDevelopmentEnvironment() {

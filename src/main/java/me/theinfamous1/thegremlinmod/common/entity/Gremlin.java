@@ -1,11 +1,8 @@
 package me.theinfamous1.thegremlinmod.common.entity;
 
-import me.theinfamous1.thegremlinmod.Config;
+import me.theinfamous1.thegremlinmod.TheGremlinModConfig;
 import me.theinfamous1.thegremlinmod.TheGremlinMod;
-import me.theinfamous1.thegremlinmod.common.entity.ai.FleeRainGoal;
-import me.theinfamous1.thegremlinmod.common.entity.ai.GoToLandGoal;
-import me.theinfamous1.thegremlinmod.common.entity.ai.GremlinMeleeAttackGoal;
-import me.theinfamous1.thegremlinmod.common.entity.ai.RestrictRainGoal;
+import me.theinfamous1.thegremlinmod.common.entity.ai.*;
 import me.theinfamous1.thegremlinmod.common.util.TGMTags;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.protocol.Packet;
@@ -20,6 +17,7 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
@@ -35,6 +33,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.LevelReader;
+import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.pathfinder.PathType;
 import org.jetbrains.annotations.Nullable;
 import software.bernie.geckolib.animatable.GeoEntity;
@@ -86,6 +85,8 @@ public class Gremlin extends AbstractGremlin implements GeoEntity, Enemy, Gremli
                 .add(Attributes.STEP_HEIGHT, 1.0D);
     }
 
+
+
     public static boolean checkCustomSpawnRules(EntityType<? extends Gremlin> animal, LevelAccessor level, MobSpawnType spawnType, BlockPos pos, RandomSource random) {
         return PathfinderMob.checkMobSpawnRules(animal, level, spawnType, pos, random);
     }
@@ -103,13 +104,16 @@ public class Gremlin extends AbstractGremlin implements GeoEntity, Enemy, Gremli
 
 
         this.targetSelector.addGoal(1, (new HurtByTargetGoal(this)).setAlertOthers());
-        this.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, Player.class,0, true, false, this::canPursueTarget));
+        this.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, Player.class,0, false, false, this::canPursueTarget));
         this.targetSelector.addGoal(3, new NearestAttackableTargetGoal<>(this, LivingEntity.class, 0, true, false, le -> le.attackable() && this.canPursueTarget(le)){
             @Override
             public boolean canContinueToUse() {
                 return this.target != null ? this.targetConditions.test(this.mob, this.target) : super.canContinueToUse();
             }
         });
+        if(TheGremlinModConfig.GREMLIN_MINE_BLOCKS.get()){
+            this.goalSelector.addGoal(TheGremlinModConfig.GREMLIN_MINE_PRIORITY.get(), new GremlinMineGoal<>(this));
+        }
     }
 
     @Override
@@ -144,7 +148,7 @@ public class Gremlin extends AbstractGremlin implements GeoEntity, Enemy, Gremli
 
     @Override
     protected long getDefaultDuplicationCooldownTime() {
-        return Config.GREMLIN_DUPLICATION_COOLDOWN.get();
+        return TheGremlinModConfig.GREMLIN_DUPLICATION_COOLDOWN.get();
     }
 
     @Override
@@ -471,5 +475,18 @@ public class Gremlin extends AbstractGremlin implements GeoEntity, Enemy, Gremli
     @Override
     protected void playAttackSound() {
         this.playSound(TheGremlinMod.GREMLIN_ATTACK.get());
+    }
+
+    @Nullable
+    @Override
+    public SpawnGroupData finalizeSpawn(ServerLevelAccessor level, DifficultyInstance difficulty, MobSpawnType spawnType, @Nullable SpawnGroupData spawnGroupData) {
+        SpawnGroupData spawnGroupData1 = super.finalizeSpawn(level, difficulty, spawnType, spawnGroupData);
+
+        this.handleAttributes();
+
+        return spawnGroupData1;
+    }
+
+    private void handleAttributes() {
     }
 }

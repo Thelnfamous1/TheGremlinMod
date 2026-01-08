@@ -1,7 +1,7 @@
 package me.theinfamous1.thegremlinmod.datagen;
 
 import com.electronwill.nightconfig.core.UnmodifiableConfig;
-import me.theinfamous1.thegremlinmod.Config;
+import me.theinfamous1.thegremlinmod.TheGremlinModConfig;
 import me.theinfamous1.thegremlinmod.TheGremlinMod;
 import net.minecraft.Util;
 import net.minecraft.data.PackOutput;
@@ -26,10 +26,11 @@ public class ModLangProvider extends LanguageProvider {
         this.add(TheGremlinMod.MOGWAI_SPAWN_EGG.get(), "Mogwai Spawn Egg");
         this.add(TheGremlinMod.MOGWAI_COCOON_SPAWN_EGG.get(), "Mogwai Cocoon Spawn Egg");
         this.add(TheGremlinMod.GREMLIN_SPAWN_EGG.get(), "Gremlin Spawn Egg");
-        for(UnmodifiableConfig.Entry entry : Config.SPEC.getValues().entrySet()){
-            String key = entry.getKey();
-            String translationKey = TheGremlinMod.MODID + ".configuration." + key;
-            this.add(translationKey, capitalizeAndSpace(key));
+        for(UnmodifiableConfig.Entry entry : TheGremlinModConfig.SPEC.getValues().entrySet()){
+            translateConfigKey(entry);
+        }
+        for(UnmodifiableConfig.Entry entry : TheGremlinModConfig.SPEC.getValues().entrySet()){
+            //translateConfigKey(entry);
         }
         this.add(Util.makeDescriptionId("subtitles", TheGremlinMod.COCOON_GROWING.getId()), "Cocoon grows");
         this.add(Util.makeDescriptionId("subtitles", TheGremlinMod.COCOON_HATCHING.getId()), "Cocoon hatches");
@@ -52,6 +53,12 @@ public class ModLangProvider extends LanguageProvider {
 
 
         this.add(Util.makeDescriptionId("subtitles", TheGremlinMod.SUNBEAM_IDLE.getId()), "Sunbeam hums");
+    }
+
+    private void translateConfigKey(UnmodifiableConfig.Entry entry) {
+        String key = entry.getKey();
+        String translationKey = TheGremlinMod.MODID + ".configuration." + key;
+        this.add(translationKey, capitalizeAndSpace(key));
     }
 
     public static String capitalizeAndSpace(String input) {

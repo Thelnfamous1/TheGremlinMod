@@ -1,6 +1,6 @@
 package me.theinfamous1.thegremlinmod.common.entity;
 
-import me.theinfamous1.thegremlinmod.Config;
+import me.theinfamous1.thegremlinmod.TheGremlinModConfig;
 import me.theinfamous1.thegremlinmod.TheGremlinMod;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -147,7 +147,7 @@ public class MogwaiCocoon extends Mob implements GeoEntity, GremlinConvert {
         this.updateSpawning();
         this.updateHatching();
 
-        if(!this.level().isClientSide() && this.tickCount > Config.COCOON_HATCH_TIME.get() && !this.isHatching() && !this.hatched()){
+        if(!this.level().isClientSide() && this.tickCount > TheGremlinModConfig.COCOON_HATCH_TIME.get() && !this.isHatching() && !this.hatched()){
             this.setHatching(true);
             this.playHatchSound();
         }
