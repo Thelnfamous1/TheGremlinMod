@@ -69,6 +69,8 @@ public class SunbeamItem extends Item implements GeoItem {
         setSwitchValue(itemstack, !switchValue);
         if(getSwitchValue(itemstack) && getTimer(itemstack) <= 0){
             setTimer(itemstack, getMaxSunbeamUseTimeTicks());
+        }
+        if(!getSwitchValue(itemstack)){
             USE_SOUND_PLAYED.remove(player.getUUID());
         }
         player.awardStat(Stats.ITEM_USED.get(this));
@@ -93,7 +95,7 @@ public class SunbeamItem extends Item implements GeoItem {
 
     @Override
     public void inventoryTick(ItemStack stack, Level level, Entity user, int slotId, boolean isSelected) {
-        if(getSwitchValue(stack) && getTimer(stack) > 0){
+        if(getSwitchValue(stack)){
             if(level.isClientSide && user instanceof LivingEntity livingUser && !USE_SOUND_PLAYED.contains(user.getUUID())){
                 ClientSoundHandler.playSunbeamSound(livingUser);
                 USE_SOUND_PLAYED.add(user.getUUID());
