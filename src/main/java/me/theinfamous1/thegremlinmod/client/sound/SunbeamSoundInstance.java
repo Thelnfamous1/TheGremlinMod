@@ -32,6 +32,7 @@ public class SunbeamSoundInstance extends AbstractTickableSoundInstance {
             this.volume = VOLUME;
             this.pitch = PITCH;
         } else {
+            SunbeamItem.resetUseSoundPlayed(this.user);
             this.stop();
         }
 

@@ -45,6 +45,18 @@ public class SunbeamItem extends Item implements GeoItem {
         super(properties);
     }
 
+    public static boolean wasUseSoundPlayed(Entity user){
+        return USE_SOUND_PLAYED.contains(user.getUUID());
+    }
+
+    public static void setUseSoundPlayed(Entity user) {
+        USE_SOUND_PLAYED.add(user.getUUID());
+    }
+
+    public static void resetUseSoundPlayed(Entity user) {
+        USE_SOUND_PLAYED.remove(user.getUUID());
+    }
+
     // Utilise our own render hook to define our custom renderer
     @Override
     public void createGeoRenderer(Consumer<GeoRenderProvider> consumer) {
@@ -71,7 +83,7 @@ public class SunbeamItem extends Item implements GeoItem {
             setTimer(itemstack, getMaxSunbeamUseTimeTicks());
         }
         if(!getSwitchValue(itemstack)){
-            USE_SOUND_PLAYED.remove(player.getUUID());
+            resetUseSoundPlayed(player);
         }
         player.awardStat(Stats.ITEM_USED.get(this));
         return InteractionResultHolder.consume(itemstack);
@@ -96,9 +108,11 @@ public class SunbeamItem extends Item implements GeoItem {
     @Override
     public void inventoryTick(ItemStack stack, Level level, Entity user, int slotId, boolean isSelected) {
         if(getSwitchValue(stack)){
-            if(level.isClientSide && user instanceof LivingEntity livingUser && !USE_SOUND_PLAYED.contains(user.getUUID())){
-                ClientSoundHandler.playSunbeamSound(livingUser);
-                USE_SOUND_PLAYED.add(user.getUUID());
+            if(user instanceof LivingEntity livingUser && !wasUseSoundPlayed(livingUser)){
+                if(level.isClientSide){
+                    ClientSoundHandler.playSunbeamSound(livingUser);
+                }
+                setUseSoundPlayed(livingUser);
             }
             if(!level.isClientSide){
                 switch (TheGremlinModConfig.SUNBEAM_DETECTION_MODE.get()){
@@ -134,7 +148,7 @@ public class SunbeamItem extends Item implements GeoItem {
             if(getTimer(stack) <= 0){
                 playSwitchSound(level, user);
                 setSwitchValue(stack, false);
-                USE_SOUND_PLAYED.remove(user.getUUID());
+                resetUseSoundPlayed(user);
                 if(user instanceof Player player){
                     player.getCooldowns().addCooldown(stack.getItem(), getSunbeamUseCooldownTimeTicks());
                 }
